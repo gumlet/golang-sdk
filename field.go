@@ -1,4 +1,4 @@
-package nodejssdk
+package gumlet
 
 import (
 	"github.com/gumlet/golang-sdk/internal/param"
