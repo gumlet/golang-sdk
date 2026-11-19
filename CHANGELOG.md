@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/gumlet/golang-sdk/compare/v1.0.0...v1.0.1) (2026-11-19)
+
+
+### Chores
+
+* **api:** regenerate SDK ([e4bfb7b](https://github.com/gumlet/golang-sdk/commit/e4bfb7b135b63a1df27fcc1e17b81cbd3499578d))
+
 ## [1.0.0](https://github.com/gumlet/golang-sdk/compare/v0.1.0...v1.0.0) (2026-11-19)
 
 
