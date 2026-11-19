@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/gumlet/golang-sdk/compare/v1.0.1...v1.1.0) (2026-11-19)
+
+
+### Features
+
+* **api:** update SDK surface (2 changes) ([4d56fbe](https://github.com/gumlet/golang-sdk/commit/4d56fbe28322cb488214b34a8a5caea8c0990aa9))
+
+
+### Chores
+
+* **api:** update generated SDK content ([655a638](https://github.com/gumlet/golang-sdk/commit/655a63832d751b22213e02ab2b8fa054c8711bd7))
+
 ## [1.0.1](https://github.com/gumlet/golang-sdk/compare/v1.0.0...v1.0.1) (2026-11-19)
 
 

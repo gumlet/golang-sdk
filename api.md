@@ -1940,14 +1940,17 @@ Get / change all details about billing and invoices.
 
 ### List Invoices
 
-Liost all invoices that are generated so far.
+List all invoices that are generated so far.
 
 | Direction | Type |
 | --- | --- |
+| Request | [`BillingListInvoicesParams`](./billing.go) |
 | Response | [`BillingListInvoicesResponse`](./billing.go) |
 
 ```go
-billing, err := client.Billing.ListInvoices(context.Background())
+billing, err := client.Billing.ListInvoices(context.Background(), sdk.BillingListInvoicesParams{
+	PageSize: sdk.F[int64](20),
+})
 if err != nil {
 	panic(err)
 }
