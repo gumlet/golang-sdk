@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gumlet/golang-sdk/internal/requestconfig"
 	"github.com/tidwall/sjson"
-	"nodejssdk/internal/requestconfig"
 )
 
 // RequestOption is an option for the requests made by the Gumlet API Client

@@ -26,7 +26,7 @@ The REST API documentation can be found on [docs.gumlet.com](https://docs.gumlet
 ## Installation
 
 ```sh
-go get nodejssdk
+go get github.com/gumlet/golang-sdk
 ```
 
 <br />
@@ -41,8 +41,8 @@ import (
 	"fmt"
 	"os"
 
-	sdk "nodejssdk"
-	"nodejssdk/option"
+	sdk "github.com/gumlet/golang-sdk"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 func main() {
@@ -103,7 +103,7 @@ if err != nil {
 	panic(err)
 }
 
-// imports: "context", "errors", "fmt", sdk "nodejssdk"
+// imports: "context", "errors", "fmt", sdk "github.com/gumlet/golang-sdk"
 ```
 
 Documented error statuses: `400`, `401`, `402`, `403`, `404`, `413`, `422`, `500`.
@@ -121,7 +121,7 @@ client := sdk.NewClient(
 	option.WithRequestTimeout(60*time.Second),
 )
 
-// imports: sdk "nodejssdk", "nodejssdk/option", "time"
+// imports: sdk "github.com/gumlet/golang-sdk", "github.com/gumlet/golang-sdk/option", "time"
 ```
 
 | Option | Type | Default | Description |

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "nodejssdk"
+	sdk "github.com/gumlet/golang-sdk"
 )
 
 // Smoke tests for one resource; see scalar_smoke_support_test.go for how to run them.

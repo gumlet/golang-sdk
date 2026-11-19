@@ -14,11 +14,11 @@ import (
 
 	"github.com/tidwall/gjson"
 
-	"nodejssdk/internal/apijson"
-	"nodejssdk/internal/apiquery"
-	"nodejssdk/internal/param"
-	"nodejssdk/internal/requestconfig"
-	"nodejssdk/option"
+	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/apiquery"
+	"github.com/gumlet/golang-sdk/internal/param"
+	"github.com/gumlet/golang-sdk/internal/requestconfig"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 // FolderService contains methods and other services that help with interacting

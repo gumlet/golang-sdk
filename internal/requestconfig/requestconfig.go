@@ -21,13 +21,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"nodejssdk/internal"
-	"nodejssdk/internal/apierror"
-	"nodejssdk/internal/apiform"
-	"nodejssdk/internal/apijson"
-	"nodejssdk/internal/apiquery"
-	"nodejssdk/internal/param"
-	"nodejssdk/internal/redact"
+	"github.com/gumlet/golang-sdk/internal"
+	"github.com/gumlet/golang-sdk/internal/apierror"
+	"github.com/gumlet/golang-sdk/internal/apiform"
+	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/apiquery"
+	"github.com/gumlet/golang-sdk/internal/param"
+	"github.com/gumlet/golang-sdk/internal/redact"
 )
 
 func getDefaultHeaders() map[string]string {

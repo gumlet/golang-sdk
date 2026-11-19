@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"nodejssdk/internal/param"
+	"github.com/gumlet/golang-sdk/internal/param"
 )
 
 var encoders sync.Map // map[encoderEntry]encoderFunc

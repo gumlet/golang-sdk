@@ -9,11 +9,11 @@ import (
 	"slices"
 	"time"
 
-	"nodejssdk/internal/apijson"
-	"nodejssdk/internal/apiquery"
-	"nodejssdk/internal/param"
-	"nodejssdk/internal/requestconfig"
-	"nodejssdk/option"
+	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/apiquery"
+	"github.com/gumlet/golang-sdk/internal/param"
+	"github.com/gumlet/golang-sdk/internal/requestconfig"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 // VideoUsageAnalyticService contains methods and other services that help with interacting

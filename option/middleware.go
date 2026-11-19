@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"nodejssdk/internal/redact"
+	"github.com/gumlet/golang-sdk/internal/redact"
 )
 
 // WithDebugLog logs the HTTP request and response content.

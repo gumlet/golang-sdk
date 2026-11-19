@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"nodejssdk/internal/requestconfig"
-	"nodejssdk/option"
+	"github.com/gumlet/golang-sdk/internal/requestconfig"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 // Client creates a struct with services and top level methods that help with

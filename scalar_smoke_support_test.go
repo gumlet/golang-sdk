@@ -27,8 +27,8 @@ import (
 	"testing"
 	"time"
 
-	sdk "nodejssdk"
-	"nodejssdk/option"
+	sdk "github.com/gumlet/golang-sdk"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 // scalarSmokeCaseListDigest fingerprints the case list the generator's smoke runner checks this

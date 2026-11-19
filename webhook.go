@@ -11,10 +11,10 @@ import (
 
 	"github.com/tidwall/gjson"
 
-	"nodejssdk/internal/apijson"
-	"nodejssdk/internal/requestconfig"
-	"nodejssdk/internal/webhooks"
-	"nodejssdk/option"
+	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/requestconfig"
+	"github.com/gumlet/golang-sdk/internal/webhooks"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 // WebhookService contains methods that help with parsing and verifying inbound

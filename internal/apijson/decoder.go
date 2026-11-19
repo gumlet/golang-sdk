@@ -12,7 +12,7 @@ import (
 
 	"github.com/tidwall/gjson"
 
-	"nodejssdk/internal/param"
+	"github.com/gumlet/golang-sdk/internal/param"
 )
 
 // decoders is a synchronized map with roughly the following type:

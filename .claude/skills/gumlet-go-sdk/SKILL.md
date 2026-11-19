@@ -1,16 +1,16 @@
 ---
 name: gumlet-go-sdk
-description: "Go SDK for Gumlet API. Use when writing Go code that calls Gumlet API with the nodejssdk package: installing it, constructing and authenticating the client, and calling API operations."
+description: "Go SDK for Gumlet API. Use when writing Go code that calls Gumlet API with the github.com/gumlet/golang-sdk package: installing it, constructing and authenticating the client, and calling API operations."
 ---
 
 # Gumlet Go SDK
 
-Generated Go client for Gumlet API, published as `nodejssdk`. Use the generated client instead of hand-writing HTTP requests.
+Generated Go client for Gumlet API, published as `github.com/gumlet/golang-sdk`. Use the generated client instead of hand-writing HTTP requests.
 
 ## Install
 
 ```sh
-go get nodejssdk
+go get github.com/gumlet/golang-sdk
 ```
 
 ## Client setup and authentication
@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	sdk "nodejssdk"
+	sdk "github.com/gumlet/golang-sdk"
 )
 
 client := sdk.NewClient()
@@ -40,8 +40,8 @@ import (
 	"fmt"
 	"os"
 
-	sdk "nodejssdk"
-	"nodejssdk/option"
+	sdk "github.com/gumlet/golang-sdk"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 func main() {
@@ -84,7 +84,7 @@ if err != nil {
 	panic(err)
 }
 
-// imports: "context", "errors", "fmt", sdk "nodejssdk"
+// imports: "context", "errors", "fmt", sdk "github.com/gumlet/golang-sdk"
 ```
 
 ## Requirements

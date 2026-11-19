@@ -1,4 +1,4 @@
-module nodejssdk
+module github.com/gumlet/golang-sdk
 
 go 1.22
 

@@ -3,7 +3,7 @@
 package nodejssdk
 
 import (
-	"nodejssdk/internal/apierror"
+	"github.com/gumlet/golang-sdk/internal/apierror"
 )
 
 type Error = apierror.Error

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"nodejssdk/internal/apijson"
-	"nodejssdk/internal/redact"
+	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/redact"
 )
 
 // Error represents an error that originates from the API, i.e. when a request is

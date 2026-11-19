@@ -2,7 +2,7 @@
 
 package nodejssdk
 
-import "nodejssdk/internal/webhooks"
+import "github.com/gumlet/golang-sdk/internal/webhooks"
 
 // The reasons the webhook helpers refuse a delivery. Every refused delivery
 // matches exactly one of them with [errors.Is]; a missing or undecodable

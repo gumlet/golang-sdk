@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"slices"
 
-	"nodejssdk/internal/apijson"
-	"nodejssdk/internal/param"
-	"nodejssdk/internal/requestconfig"
-	"nodejssdk/option"
+	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/param"
+	"github.com/gumlet/golang-sdk/internal/requestconfig"
+	"github.com/gumlet/golang-sdk/option"
 )
 
 // AudioUploadService contains methods and other services that help with interacting

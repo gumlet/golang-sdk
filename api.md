@@ -126,7 +126,7 @@ import (
 	"context"
 	"fmt"
 
-	sdk "nodejssdk"
+	sdk "github.com/gumlet/golang-sdk"
 )
 
 client := sdk.NewClient()
