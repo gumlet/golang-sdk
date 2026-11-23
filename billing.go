@@ -5,9 +5,11 @@ package gumlet
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"slices"
 
 	"github.com/gumlet/golang-sdk/internal/apijson"
+	"github.com/gumlet/golang-sdk/internal/apiquery"
 	"github.com/gumlet/golang-sdk/internal/param"
 	"github.com/gumlet/golang-sdk/internal/requestconfig"
 	"github.com/gumlet/golang-sdk/option"
@@ -29,11 +31,12 @@ func NewBillingService(opts ...option.RequestOption) (r *BillingService) {
 	return
 }
 
-// Liost all invoices that are generated so far.
+// List all invoices that are generated so far.
 //
 // Parameters:
 //
 //	ctx: Context for the request.
+//	query: BillingListInvoicesParams request parameters.
 //	opts: Options to apply to this request.
 //
 // Returns:
@@ -42,16 +45,18 @@ func NewBillingService(opts ...option.RequestOption) (r *BillingService) {
 //
 // Example:
 //
-//	billing, err := client.Billing.ListInvoices(context.Background())
+//	billing, err := client.Billing.ListInvoices(context.Background(), sdk.BillingListInvoicesParams{
+//		PageSize: sdk.F[int64](20),
+//	})
 //	if err != nil {
 //		panic(err)
 //	}
 //
 //	fmt.Println(billing)
-func (r *BillingService) ListInvoices(ctx context.Context, opts ...option.RequestOption) (res *BillingListInvoicesResponse, err error) {
+func (r *BillingService) ListInvoices(ctx context.Context, query BillingListInvoicesParams, opts ...option.RequestOption) (res *BillingListInvoicesResponse, err error) {
 	opts = slices.Concat(r.Options, opts)
 	path := "mixed/billing/invoice/history"
-	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
+	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, query, &res, opts...)
 	return res, err
 }
 
@@ -140,6 +145,22 @@ func (r *BillingService) FetchUpcomingInvoice(ctx context.Context, opts ...optio
 	path := "mixed/billing/invoice/upcoming"
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
 	return res, err
+}
+
+type BillingListInvoicesParams struct {
+	// Stripe invoice ID cursor for the next page. Pass the `id` of the last invoice
+	// from the previous response to fetch the next set of invoices.
+	LastID param.Field[string] `query:"last_id"`
+	// Number of invoices to return per page. **Default: `20`**. **Maximum: `100`**.
+	PageSize param.Field[int64] `query:"page_size"`
+}
+
+// URLQuery serializes [BillingListInvoicesParams]'s query parameters as `url.Values`.
+func (r BillingListInvoicesParams) URLQuery() (v url.Values) {
+	return apiquery.MarshalWithSettings(r, apiquery.QuerySettings{
+		ArrayFormat:  apiquery.ArrayQueryFormatComma,
+		NestedFormat: apiquery.NestedQueryFormatBrackets,
+	})
 }
 
 type BillingUpdateDetailsParams struct {

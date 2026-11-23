@@ -14,10 +14,26 @@ import (
 
 func TestScalarSmokeBillingService(t *testing.T) {
 	t.Parallel()
-	scalarSmokeCase(t, "billing.listInvoices:single", "listInvoices", "/mixed/billing/invoice/history", "listInvoices", func() {
+	scalarSmokeCase(t, "billing.listInvoices:required", "listInvoices", "/mixed/billing/invoice/history", "listInvoices: required params", func() {
 		client := scalarSmokeClient
 		{
-			billing, err := client.Billing.ListInvoices(context.Background())
+			billing, err := client.Billing.ListInvoices(context.Background(), sdk.BillingListInvoicesParams{
+				PageSize: sdk.F[int64](20),
+			})
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println(billing)
+		}
+	})
+	scalarSmokeCase(t, "billing.listInvoices:all", "listInvoices", "/mixed/billing/invoice/history", "listInvoices: all params", func() {
+		client := scalarSmokeClient
+		{
+			billing, err := client.Billing.ListInvoices(context.Background(), sdk.BillingListInvoicesParams{
+				LastID:   sdk.F[string]("lastId"),
+				PageSize: sdk.F[int64](20),
+			})
 			if err != nil {
 				panic(err)
 			}
