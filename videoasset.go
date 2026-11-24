@@ -241,6 +241,44 @@ func (r *VideoAssetService) ThumbnailSelect(ctx context.Context, assetID string,
 	return res, err
 }
 
+// Use any image file to use as thumbnail. Once you use the API, you will get `upload_url` in the response, and that can be used to upload the image file.
+//
+// Here is the sample curl request.
+//
+// ```bash
+// curl --location --request PUT '<upload_url>' \
+// --data '<YOUR_FILE_PATH>'
+// ```
+//
+// Parameters:
+//
+//	ctx: Context for the request.
+//	assetID: An asset id for the previously created asset.
+//	opts: Options to apply to this request.
+//
+// Returns:
+//
+//	*VideoAssetThumbnailUploadResponse
+//
+// Example:
+//
+//	videoAsset, err := client.VideoAssets.ThumbnailUpload(context.Background(), "assetId")
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	fmt.Println(videoAsset)
+func (r *VideoAssetService) ThumbnailUpload(ctx context.Context, assetID string, opts ...option.RequestOption) (res *VideoAssetThumbnailUploadResponse, err error) {
+	opts = slices.Concat(r.Options, opts)
+	if assetID == "" {
+		err = errors.New("missing required asset_id parameter")
+		return nil, err
+	}
+	path := fmt.Sprintf("video/assets/%s/thumbnail", url.PathEscape(assetID))
+	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, nil, &res, opts...)
+	return res, err
+}
+
 // This endpoint will create/update video asset chapters.
 //
 // Parameters:
@@ -1716,6 +1754,33 @@ func (r *VideoAssetThumbnailSelectResponse) UnmarshalJSON(data []byte) (err erro
 }
 
 func (r videoAssetThumbnailSelectResponseJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetThumbnailUploadResponse struct {
+	// Asset ID
+	AssetID string `json:"asset_id"`
+	// Thumbnail updated at timestamp in milliseconds since epoch
+	ThumbnailUpdatedAt int64 `json:"thumbnail_updated_at"`
+	// Upload URL on which new thumbnail must be uploaded using a PUT request
+	UploadURL string                                `json:"upload_url"`
+	JSON      videoAssetThumbnailUploadResponseJSON `json:"-"`
+}
+
+// videoAssetThumbnailUploadResponseJSON contains the JSON metadata for the struct [VideoAssetThumbnailUploadResponse]
+type videoAssetThumbnailUploadResponseJSON struct {
+	AssetID            apijson.Field
+	ThumbnailUpdatedAt apijson.Field
+	UploadURL          apijson.Field
+	raw                string
+	ExtraFields        map[string]apijson.Field
+}
+
+func (r *VideoAssetThumbnailUploadResponse) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetThumbnailUploadResponseJSON) RawJSON() string {
 	return r.raw
 }
 

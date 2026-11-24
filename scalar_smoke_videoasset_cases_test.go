@@ -245,6 +245,17 @@ func TestScalarSmokeVideoAssetService(t *testing.T) {
 			fmt.Println(videoAsset)
 		}
 	})
+	scalarSmokeCase(t, "videoAssets.thumbnailUpload:single", "thumbnailUpload", "/video/assets/{asset_ID}/thumbnail", "thumbnailUpload", func() {
+		client := scalarSmokeClient
+		{
+			videoAsset, err := client.VideoAssets.ThumbnailUpload(context.Background(), "assetId")
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println(videoAsset)
+		}
+	})
 	scalarSmokeCase(t, "videoAssets.createUpdateChapter:single", "createUpdateChapter", "/video/assets/{asset_id}/chapters", "createUpdateChapter", func() {
 		client := scalarSmokeClient
 		{
