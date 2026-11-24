@@ -11,13 +11,13 @@ Complete reference of every operation, grouped by resource. See [the README](./R
   - [Delete Asset](#delete-asset)
   - [Update Asset](#update-asset)
   - [Update thumbnail from video](#update-thumbnail-from-video)
-  - [Update thumbnail via upload](#update-thumbnail-via-upload)
   - [Create/Update Video Asset Chapters](#createupdate-video-asset-chapters)
   - [List Assets (Deprecated)](#list-assets-deprecated)
   - [List Assets](#list-assets)
   - [Bulk Delete](#bulk-delete)
   - [Bulk Tag](#bulk-tag)
   - [Asset Analytics](#asset-analytics)
+  - [Upload a thumbnail file](#upload-a-thumbnail-file)
 - [`SubtitleUpload`](#subtitleupload)
   - [Upload Subtitles](#upload-subtitles)
   - [Complete Subtitle Upload](#complete-subtitle-upload)
@@ -265,30 +265,6 @@ if err != nil {
 fmt.Println(videoAsset)
 ```
 
-### Update thumbnail via upload
-
-Use any image file to use as thumbnail. Once you use the API, you will get `upload_url` in the response, and that can be used to upload the image file.
-
-Here is the sample curl request.
-
-```bash
-curl --location --request PUT '<upload_url>' \
---data '<YOUR_FILE_PATH>'
-```
-
-| Direction | Type |
-| --- | --- |
-| Response | [`VideoAssetThumbnailUploadResponse`](./videoasset.go) |
-
-```go
-videoAsset, err := client.VideoAssets.ThumbnailUpload(context.Background(), "assetId")
-if err != nil {
-	panic(err)
-}
-
-fmt.Println(videoAsset)
-```
-
 ### Create/Update Video Asset Chapters
 
 This endpoint will create/update video asset chapters.
@@ -433,6 +409,23 @@ videoAsset, err := client.VideoAssets.Analytics(context.Background(), "assetId",
 	GroupBy: sdk.F[sdk.VideoAssetAnalyticsParamsGroupBy](sdk.VideoAssetAnalyticsParamsGroupBy("daily")),
 	Metrics: sdk.F[[]sdk.VideoAssetAnalyticsParamsMetric]([]sdk.VideoAssetAnalyticsParamsMetric{"impressions"}),
 })
+if err != nil {
+	panic(err)
+}
+
+fmt.Println(videoAsset)
+```
+
+### Upload a thumbnail file
+
+Requests a thumbnail upload URL for the asset and PUTs the file to it.
+
+| Direction | Type |
+| --- | --- |
+| Response | [`VideoAssetUploadThumbnailFileResponse`](./videoasset.go) |
+
+```go
+videoAsset, err := client.VideoAssets.UploadThumbnailFile(context.Background(), "assetId", strings.NewReader("file contents"))
 if err != nil {
 	panic(err)
 }

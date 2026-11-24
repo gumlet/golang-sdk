@@ -4,8 +4,10 @@ package gumlet
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"slices"
@@ -239,44 +241,6 @@ func (r *VideoAssetService) ThumbnailSelect(ctx context.Context, assetID string,
 	return res, err
 }
 
-// Use any image file to use as thumbnail. Once you use the API, you will get `upload_url` in the response, and that can be used to upload the image file.
-//
-// Here is the sample curl request.
-//
-// ```bash
-// curl --location --request PUT '<upload_url>' \
-// --data '<YOUR_FILE_PATH>'
-// ```
-//
-// Parameters:
-//
-//	ctx: Context for the request.
-//	assetID: An asset id for the previously created asset.
-//	opts: Options to apply to this request.
-//
-// Returns:
-//
-//	*VideoAssetThumbnailUploadResponse
-//
-// Example:
-//
-//	videoAsset, err := client.VideoAssets.ThumbnailUpload(context.Background(), "assetId")
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	fmt.Println(videoAsset)
-func (r *VideoAssetService) ThumbnailUpload(ctx context.Context, assetID string, opts ...option.RequestOption) (res *VideoAssetThumbnailUploadResponse, err error) {
-	opts = slices.Concat(r.Options, opts)
-	if assetID == "" {
-		err = errors.New("missing required asset_id parameter")
-		return nil, err
-	}
-	path := fmt.Sprintf("video/assets/%s/thumbnail", url.PathEscape(assetID))
-	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, nil, &res, opts...)
-	return res, err
-}
-
 // This endpoint will create/update video asset chapters.
 //
 // Parameters:
@@ -503,6 +467,60 @@ func (r *VideoAssetService) Analytics(ctx context.Context, assetID string, body 
 	path := fmt.Sprintf("video/assets/%s/analytics", url.PathEscape(assetID))
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, body, &res, opts...)
 	return res, err
+}
+
+// Requests a thumbnail upload URL for the asset and PUTs the file to it.
+//
+// Parameters:
+//
+//	ctx: Context for the request.
+//	assetID: An asset id for the previously created asset.
+//	file: The file to upload. It is read in full before the first request, then sent to the pre-signed URL the request returns, without the client's credentials. It goes out on a clone of the client's *http.Transport, through a RoundTripper or HTTPClient of yours only when it implements option.SignedUploadTransport, and otherwise on a transport of the SDK's own with the proxy from the environment.
+//	opts: Options to apply to this request.
+//
+// Returns:
+//
+//	*VideoAssetUploadThumbnailFileResponse
+//
+// Example:
+//
+//	videoAsset, err := client.VideoAssets.UploadThumbnailFile(context.Background(), "assetId", strings.NewReader("file contents"))
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	fmt.Println(videoAsset)
+func (r *VideoAssetService) UploadThumbnailFile(ctx context.Context, assetID string, file io.Reader, opts ...option.RequestOption) (res *VideoAssetUploadThumbnailFileResponse, err error) {
+	opts = slices.Concat(r.Options, opts)
+	if assetID == "" {
+		err = errors.New("missing required asset_id parameter")
+		return nil, err
+	}
+	signedUploadFile, err := requestconfig.ReadSignedUploadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf("video/assets/%s/thumbnail", url.PathEscape(assetID))
+	initiate, err := requestconfig.NewRequestConfig(ctx, http.MethodPost, path, nil, nil, opts...)
+	if err != nil {
+		return nil, err
+	}
+	initiated, err := requestconfig.ExecuteSignedUploadInitiation(initiate, true)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(initiated, &res)
+	if err != nil {
+		return nil, err
+	}
+	err = requestconfig.UploadToSignedURL(ctx, initiate.MaxRetries, initiate.RequestTimeout, requestconfig.SignedUploadTransport(initiate), initiated, requestconfig.SignedUploadSpec{
+		URLField: []string{"upload_url"},
+		Method:   http.MethodPut,
+	}, signedUploadFile)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 type VideoAssetNewParams struct {
@@ -1701,33 +1719,6 @@ func (r videoAssetThumbnailSelectResponseJSON) RawJSON() string {
 	return r.raw
 }
 
-type VideoAssetThumbnailUploadResponse struct {
-	// Asset ID
-	AssetID string `json:"asset_id"`
-	// Thumbnail updated at timestamp in milliseconds since epoch
-	ThumbnailUpdatedAt int64 `json:"thumbnail_updated_at"`
-	// Upload URL on which new thumbnail must be uploaded using a PUT request
-	UploadURL string                                `json:"upload_url"`
-	JSON      videoAssetThumbnailUploadResponseJSON `json:"-"`
-}
-
-// videoAssetThumbnailUploadResponseJSON contains the JSON metadata for the struct [VideoAssetThumbnailUploadResponse]
-type videoAssetThumbnailUploadResponseJSON struct {
-	AssetID            apijson.Field
-	ThumbnailUpdatedAt apijson.Field
-	UploadURL          apijson.Field
-	raw                string
-	ExtraFields        map[string]apijson.Field
-}
-
-func (r *VideoAssetThumbnailUploadResponse) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r videoAssetThumbnailUploadResponseJSON) RawJSON() string {
-	return r.raw
-}
-
 type VideoAssetListWorkspaceFoldersAndDeprecatedResponse struct {
 	AllAssets     []VideoAssetListWorkspaceFoldersAndDeprecatedResponseAllAsset `json:"all_assets" api:"required"`
 	AssetCount    int64                                                         `json:"asset_count"`
@@ -1883,6 +1874,33 @@ func (r *VideoAssetAnalyticsResponse) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (r videoAssetAnalyticsResponseJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadThumbnailFileResponse struct {
+	// Asset ID
+	AssetID string `json:"asset_id"`
+	// Thumbnail updated at timestamp in milliseconds since epoch
+	ThumbnailUpdatedAt int64 `json:"thumbnail_updated_at"`
+	// Upload URL on which new thumbnail must be uploaded using a PUT request
+	UploadURL string                                    `json:"upload_url"`
+	JSON      videoAssetUploadThumbnailFileResponseJSON `json:"-"`
+}
+
+// videoAssetUploadThumbnailFileResponseJSON contains the JSON metadata for the struct [VideoAssetUploadThumbnailFileResponse]
+type videoAssetUploadThumbnailFileResponseJSON struct {
+	AssetID            apijson.Field
+	ThumbnailUpdatedAt apijson.Field
+	UploadURL          apijson.Field
+	raw                string
+	ExtraFields        map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadThumbnailFileResponse) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadThumbnailFileResponseJSON) RawJSON() string {
 	return r.raw
 }
 
