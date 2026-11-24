@@ -84,24 +84,6 @@ func (r *VideoAssetService) New(ctx context.Context, body VideoAssetNewParams, o
 //
 //	videoAsset, err := client.VideoAssets.Upload(context.Background(), sdk.VideoAssetUploadParams{
 //		WorkspaceID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-//		CallToActions: sdk.F[[]sdk.VideoAssetUploadParamsCallToAction]([]sdk.VideoAssetUploadParamsCallToAction{sdk.VideoAssetUploadParamsCallToAction{
-//			Text:              sdk.F[string]("some test"),
-//			URL:               sdk.F[string]("https://some-url.com"),
-//			StartTime:         sdk.F[int64](1),
-//			EndTime:           sdk.F[int64](90),
-//			FontColor:         sdk.F[string]("#000001"),
-//			BackgroundColor:   sdk.F[string]("#ffffff"),
-//			PositionFromTop:   sdk.F[int64](11),
-//			PositionFromRight: sdk.F[int64](23),
-//		}}),
-//		CollectionID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-//		Description:  sdk.F[string]("some description"),
-//		Folder:       sdk.F[string]("697375fbfa2d1037283140e4"),
-//		Format:       sdk.F[sdk.VideoAssetUploadParamsFormat](sdk.VideoAssetUploadParamsFormat("ABR")),
-//		Metadata:     sdk.F[map[string]interface{}](map[string]interface{}{}),
-//		PlaylistID:   sdk.F[string]("6597acd5ed6f26a9c5ca9633"),
-//		ProfileID:    sdk.F[string]("646df1c9173a4a2fcac180b7"),
-//		Tag:          sdk.F[[]string]([]string{"ball"}),
 //	})
 //	if err != nil {
 //		panic(err)
@@ -524,24 +506,6 @@ func (r *VideoAssetService) Analytics(ctx context.Context, assetID string, body 
 //
 //	videoAsset, err := client.VideoAssets.UploadFile(context.Background(), strings.NewReader("file contents"), sdk.VideoAssetUploadFileParams{
 //		WorkspaceID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-//		CallToActions: sdk.F[[]sdk.VideoAssetUploadFileParamsCallToAction]([]sdk.VideoAssetUploadFileParamsCallToAction{sdk.VideoAssetUploadFileParamsCallToAction{
-//			Text:              sdk.F[string]("some test"),
-//			URL:               sdk.F[string]("https://some-url.com"),
-//			StartTime:         sdk.F[int64](1),
-//			EndTime:           sdk.F[int64](90),
-//			FontColor:         sdk.F[string]("#000001"),
-//			BackgroundColor:   sdk.F[string]("#ffffff"),
-//			PositionFromTop:   sdk.F[int64](11),
-//			PositionFromRight: sdk.F[int64](23),
-//		}}),
-//		CollectionID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-//		Description:  sdk.F[string]("some description"),
-//		Folder:       sdk.F[string]("697375fbfa2d1037283140e4"),
-//		Format:       sdk.F[sdk.VideoAssetUploadFileParamsFormat](sdk.VideoAssetUploadFileParamsFormat("ABR")),
-//		Metadata:     sdk.F[map[string]interface{}](map[string]interface{}{}),
-//		PlaylistID:   sdk.F[string]("6597acd5ed6f26a9c5ca9633"),
-//		ProfileID:    sdk.F[string]("646df1c9173a4a2fcac180b7"),
-//		Tag:          sdk.F[[]string]([]string{"ball"}),
 //	})
 //	if err != nil {
 //		panic(err)
