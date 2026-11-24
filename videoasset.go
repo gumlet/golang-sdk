@@ -552,17 +552,17 @@ func (r *VideoAssetService) UploadFile(ctx context.Context, file io.Reader, body
 //
 // Returns:
 //
-//	*VideoAssetUploadThumbnailResponse
+//	*VideoAssetUploadThumbnailFileResponse
 //
 // Example:
 //
-//	videoAsset, err := client.VideoAssets.UploadThumbnail(context.Background(), "assetId", strings.NewReader("file contents"))
+//	videoAsset, err := client.VideoAssets.UploadThumbnailFile(context.Background(), "assetId", strings.NewReader("file contents"))
 //	if err != nil {
 //		panic(err)
 //	}
 //
 //	fmt.Println(videoAsset)
-func (r *VideoAssetService) UploadThumbnail(ctx context.Context, assetID string, file io.Reader, opts ...option.RequestOption) (res *VideoAssetUploadThumbnailResponse, err error) {
+func (r *VideoAssetService) UploadThumbnailFile(ctx context.Context, assetID string, file io.Reader, opts ...option.RequestOption) (res *VideoAssetUploadThumbnailFileResponse, err error) {
 	opts = slices.Concat(r.Options, opts)
 	if assetID == "" {
 		err = errors.New("missing required asset_id parameter")
@@ -2330,18 +2330,18 @@ func (r videoAssetUploadFileResponseJSON) RawJSON() string {
 	return r.raw
 }
 
-type VideoAssetUploadThumbnailResponse struct {
+type VideoAssetUploadThumbnailFileResponse struct {
 	// Asset ID
 	AssetID string `json:"asset_id"`
 	// Thumbnail updated at timestamp in milliseconds since epoch
 	ThumbnailUpdatedAt int64 `json:"thumbnail_updated_at"`
 	// Upload URL on which new thumbnail must be uploaded using a PUT request
-	UploadURL string                                `json:"upload_url"`
-	JSON      videoAssetUploadThumbnailResponseJSON `json:"-"`
+	UploadURL string                                    `json:"upload_url"`
+	JSON      videoAssetUploadThumbnailFileResponseJSON `json:"-"`
 }
 
-// videoAssetUploadThumbnailResponseJSON contains the JSON metadata for the struct [VideoAssetUploadThumbnailResponse]
-type videoAssetUploadThumbnailResponseJSON struct {
+// videoAssetUploadThumbnailFileResponseJSON contains the JSON metadata for the struct [VideoAssetUploadThumbnailFileResponse]
+type videoAssetUploadThumbnailFileResponseJSON struct {
 	AssetID            apijson.Field
 	ThumbnailUpdatedAt apijson.Field
 	UploadURL          apijson.Field
@@ -2349,11 +2349,11 @@ type videoAssetUploadThumbnailResponseJSON struct {
 	ExtraFields        map[string]apijson.Field
 }
 
-func (r *VideoAssetUploadThumbnailResponse) UnmarshalJSON(data []byte) (err error) {
+func (r *VideoAssetUploadThumbnailFileResponse) UnmarshalJSON(data []byte) (err error) {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r videoAssetUploadThumbnailResponseJSON) RawJSON() string {
+func (r videoAssetUploadThumbnailFileResponseJSON) RawJSON() string {
 	return r.raw
 }
 
