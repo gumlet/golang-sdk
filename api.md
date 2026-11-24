@@ -422,10 +422,10 @@ Requests a thumbnail upload URL for the asset and PUTs the file to it.
 
 | Direction | Type |
 | --- | --- |
-| Response | [`VideoAssetUploadThumbnailFileResponse`](./videoasset.go) |
+| Response | [`VideoAssetUploadThumbnailResponse`](./videoasset.go) |
 
 ```go
-videoAsset, err := client.VideoAssets.UploadThumbnailFile(context.Background(), "assetId", strings.NewReader("file contents"))
+videoAsset, err := client.VideoAssets.UploadThumbnail(context.Background(), "assetId", strings.NewReader("file contents"))
 if err != nil {
 	panic(err)
 }
