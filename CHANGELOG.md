@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.2](https://github.com/gumlet/golang-sdk/compare/v1.1.1...v1.1.2) (2026-11-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **api:** 3 breaking changes to the SDK surface.
+    - method-name POST video/assets/{p}/thumbnail — method names differ (breaking: renamed; the old spelling no longer resolves)
+    - response-shape POST video/assets/{p}/thumbnail→ — holds another named type — after: VideoAssetUploadThumbnailFileResponse, before: VideoAssetUploadThumbnailResponse (breaking: retyped to another named struct; Go types are nominal, so values of the old type no longer assign)
+    - types-classes videoasset.go:VideoAssetUploadThumbnailResponse — struct only in before (breaking: removed; VideoAssetUploadThumbnailFileResponse appeared in its place, likely a rename)
+
+### Features
+
+* **api:** update SDK surface (4 changes) ([00c6187](https://github.com/gumlet/golang-sdk/commit/00c618779ba18c17636d688951b1c23353b3ff6c))
+
+
+### Chores
+
+* **api:** update generated SDK content ([9ce3901](https://github.com/gumlet/golang-sdk/commit/9ce3901df179e63db77a45e7e93089650113cbb5))
+* release 1.1.2 ([5f489fd](https://github.com/gumlet/golang-sdk/commit/5f489fdc8eae6de88252b8452164c3363ec51dda))
+
 ## [1.1.1](https://github.com/gumlet/golang-sdk/compare/v1.1.0...v1.1.1) (2026-11-24)
 
 
