@@ -11,6 +11,7 @@ The REST API documentation can be found on [docs.gumlet.com](https://docs.gumlet
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Reference](./api.md)
+- [Signed uploads](#signed-uploads)
 - [Authentication](#authentication)
 - [Errors](#errors)
 - [Client Options](#client-options)
@@ -67,6 +68,14 @@ func main() {
 The examples in the following sections assume a `client` configured as shown above.
 
 See the [API reference](./api.md) for every available operation.
+
+<br />
+
+## Signed uploads
+
+Some methods ask the API for a pre-signed URL and send a file to it. The URL's query is its own credential and points at another host, so the upload is built from nothing: it carries the file and the headers the response names, never the client's credentials, default headers or query, middleware or cookie jar, and a redirect is not followed. It takes the client's network setup only when that is a plain `*http.Transport`, which it clones for its proxy and TLS settings. A `RoundTripper` or `option.WithHTTPClient` client of your own may add headers of its own to whatever it sends, so the upload never goes through one unless you mark it (below), and uses a transport of its own and the proxy settings in the environment instead.
+
+When your own `RoundTripper` or `HTTPClient` is how your application reaches the network (a proxy or TLS setup only it knows), also implement `option.SignedUploadTransport` on it, and signed uploads are sent through it. Implement it only on one that sends each request as it is handed over and follows no redirect: every header it adds reaches the upload host, and a redirect it follows re-sends the file to a host the API never named. The SDK fails the upload only when it can see that redirect, as in the response of an `*http.Client`. A type that embeds a marked one is marked too, since embedding promotes the method. Without a request timeout, each upload attempt through it fails after 10 minutes without progress, and the SDK gives up on an attempt whose timeout or cancel came even if your code ignores the request's context, leaving that attempt to finish in your code. Marking `http.DefaultTransport` has no effect: the process's transport is never lent to an upload, nor is one of its type that cannot be compared with it, such as a func.
 
 <br />
 

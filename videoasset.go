@@ -4,8 +4,10 @@ package gumlet
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"slices"
@@ -82,24 +84,6 @@ func (r *VideoAssetService) New(ctx context.Context, body VideoAssetNewParams, o
 //
 //	videoAsset, err := client.VideoAssets.Upload(context.Background(), sdk.VideoAssetUploadParams{
 //		WorkspaceID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-//		CallToActions: sdk.F[[]sdk.VideoAssetUploadParamsCallToAction]([]sdk.VideoAssetUploadParamsCallToAction{sdk.VideoAssetUploadParamsCallToAction{
-//			Text:              sdk.F[string]("some test"),
-//			URL:               sdk.F[string]("https://some-url.com"),
-//			StartTime:         sdk.F[int64](1),
-//			EndTime:           sdk.F[int64](90),
-//			FontColor:         sdk.F[string]("#000001"),
-//			BackgroundColor:   sdk.F[string]("#ffffff"),
-//			PositionFromTop:   sdk.F[int64](11),
-//			PositionFromRight: sdk.F[int64](23),
-//		}}),
-//		CollectionID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-//		Description:  sdk.F[string]("some description"),
-//		Folder:       sdk.F[string]("697375fbfa2d1037283140e4"),
-//		Format:       sdk.F[sdk.VideoAssetUploadParamsFormat](sdk.VideoAssetUploadParamsFormat("ABR")),
-//		Metadata:     sdk.F[map[string]interface{}](map[string]interface{}{}),
-//		PlaylistID:   sdk.F[string]("6597acd5ed6f26a9c5ca9633"),
-//		ProfileID:    sdk.F[string]("646df1c9173a4a2fcac180b7"),
-//		Tag:          sdk.F[[]string]([]string{"ball"}),
 //	})
 //	if err != nil {
 //		panic(err)
@@ -503,6 +487,112 @@ func (r *VideoAssetService) Analytics(ctx context.Context, assetID string, body 
 	path := fmt.Sprintf("video/assets/%s/analytics", url.PathEscape(assetID))
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, body, &res, opts...)
 	return res, err
+}
+
+// This endpoint creates a video asset allowing upload of a video from the local file system and ingest media content into the Gumlet system for processing and delivery. Body parameters are the same as the Create Asset body parameters except for the `input` parameter, which this endpoint does not take. A successful response will be returned with `upload_url` field. You can make `PUT` request to that URL to upload video. To upload video using `upload_url` refer to [this](https://docs.gumlet.com/docs/direct-upload#2-use-the-url-to-upload-a-file).
+//
+// Parameters:
+//
+//	ctx: Context for the request.
+//	file: The file to upload. It is read in full before the first request, then sent to the pre-signed URL the request returns, without the client's credentials. It goes out on a clone of the client's *http.Transport, through a RoundTripper or HTTPClient of yours only when it implements option.SignedUploadTransport, and otherwise on a transport of the SDK's own with the proxy from the environment.
+//	body: VideoAssetUploadFileParams request parameters.
+//	opts: Options to apply to this request.
+//
+// Returns:
+//
+//	*VideoAssetUploadFileResponse: 200
+//
+// Example:
+//
+//	videoAsset, err := client.VideoAssets.UploadFile(context.Background(), strings.NewReader("file contents"), sdk.VideoAssetUploadFileParams{
+//		WorkspaceID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
+//	})
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	fmt.Println(videoAsset)
+func (r *VideoAssetService) UploadFile(ctx context.Context, file io.Reader, body VideoAssetUploadFileParams, opts ...option.RequestOption) (res *VideoAssetUploadFileResponse, err error) {
+	opts = slices.Concat(r.Options, opts)
+	signedUploadFile, err := requestconfig.ReadSignedUploadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	path := "video/assets/upload"
+	initiate, err := requestconfig.NewRequestConfig(ctx, http.MethodPost, path, body, nil, opts...)
+	if err != nil {
+		return nil, err
+	}
+	initiated, err := requestconfig.ExecuteSignedUploadInitiation(initiate, true)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(initiated, &res)
+	if err != nil {
+		return nil, err
+	}
+	err = requestconfig.UploadToSignedURL(ctx, initiate.MaxRetries, initiate.RequestTimeout, requestconfig.SignedUploadTransport(initiate), initiated, requestconfig.SignedUploadSpec{
+		URLField: []string{"upload_url"},
+		Method:   http.MethodPut,
+	}, signedUploadFile)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// Requests a thumbnail upload URL for the asset and PUTs the file to it.
+//
+// Parameters:
+//
+//	ctx: Context for the request.
+//	assetID: An asset id for the previously created asset.
+//	file: The file to upload. It is read in full before the first request, then sent to the pre-signed URL the request returns, without the client's credentials. It goes out on a clone of the client's *http.Transport, through a RoundTripper or HTTPClient of yours only when it implements option.SignedUploadTransport, and otherwise on a transport of the SDK's own with the proxy from the environment.
+//	opts: Options to apply to this request.
+//
+// Returns:
+//
+//	*VideoAssetUploadThumbnailResponse
+//
+// Example:
+//
+//	videoAsset, err := client.VideoAssets.UploadThumbnail(context.Background(), "assetId", strings.NewReader("file contents"))
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	fmt.Println(videoAsset)
+func (r *VideoAssetService) UploadThumbnail(ctx context.Context, assetID string, file io.Reader, opts ...option.RequestOption) (res *VideoAssetUploadThumbnailResponse, err error) {
+	opts = slices.Concat(r.Options, opts)
+	if assetID == "" {
+		err = errors.New("missing required asset_id parameter")
+		return nil, err
+	}
+	signedUploadFile, err := requestconfig.ReadSignedUploadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf("video/assets/%s/thumbnail", url.PathEscape(assetID))
+	initiate, err := requestconfig.NewRequestConfig(ctx, http.MethodPost, path, nil, nil, opts...)
+	if err != nil {
+		return nil, err
+	}
+	initiated, err := requestconfig.ExecuteSignedUploadInitiation(initiate, true)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(initiated, &res)
+	if err != nil {
+		return nil, err
+	}
+	err = requestconfig.UploadToSignedURL(ctx, initiate.MaxRetries, initiate.RequestTimeout, requestconfig.SignedUploadTransport(initiate), initiated, requestconfig.SignedUploadSpec{
+		URLField: []string{"upload_url"},
+		Method:   http.MethodPut,
+	}, signedUploadFile)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 type VideoAssetNewParams struct {
@@ -1515,6 +1605,311 @@ func (r VideoAssetAnalyticsParamsMetric) IsKnown() bool {
 	return false
 }
 
+type VideoAssetUploadFileParams struct {
+	// Gumlet video workspace ID. Preferred over deprecated `collection_id` /
+	// `source_id` (same ID).
+	WorkspaceID param.Field[string] `json:"workspace_id" api:"required"`
+	// Add additional Audio / Subtitle tracks to Gumlet for transcoding and delivery
+	// along with video asset track.
+	AdditionalTracks param.Field[[]VideoAssetUploadFileParamsAdditionalTrack] `json:"additional_tracks"`
+	// Create an animated GIF from the video.
+	AnimatedGif param.Field[VideoAssetUploadFileParamsAnimatedGif] `json:"animated_gif"`
+	// This flag allows Gumlet to transcode and deliver audio-only in the specified
+	// format. In this case, video transformation and thumbnails/animated GIFs would
+	// not be created. **Default: `false`**
+	AudioOnly param.Field[bool] `json:"audio_only"`
+	// A CTA is an explicit prompt within the video content encouraging viewers to take
+	// a particular action.
+	CallToActions param.Field[[]VideoAssetUploadFileParamsCallToAction] `json:"call_to_actions"`
+	// Deprecated. Use `workspace_id` instead. Still accepted for backwards
+	// compatibility.
+	CollectionID param.Field[string] `json:"collection_id"`
+	// This transformation can be used to crop the video by defining a rectangular area
+	// within the dimensions of the output video.
+	Crop param.Field[VideoAssetUploadFileParamsCrop] `json:"crop"`
+	// Attach some textual data with the asset. This field is neither searchable nor
+	// filterable.
+	Description param.Field[string] `json:"description"`
+	// Enable DRM encryption for transcoded videos. Gumlet supports Widevine and
+	// FairPlay DRMs.
+	EnableDrm param.Field[bool] `json:"enable_drm"`
+	// Add this asset to an existing folder by `folder_id`.
+	Folder param.Field[string] `json:"folder"`
+	// Transcode and deliver the asset in the requested format. The options can be one
+	// of `ABR` (HLS + DASH) and `MP4`.
+	Format param.Field[VideoAssetUploadFileParamsFormat] `json:"format"`
+	// Gumlet allows you to generate subtitles from the audio stream (use <a
+	// href='https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes'> ISO 639-1
+	// </a> Language Codes)
+	GenerateSubtitles param.Field[VideoAssetUploadFileParamsGenerateSubtitles] `json:"generate_subtitles"`
+	// Resize video with the given height. Can be an absolute value in pixels or a
+	// percentage value with the `%` suffix. Specified values greater than the original
+	// asset height will be ignored. Applicable only when specified format is `MP4`.
+	Height param.Field[string] `json:"height"`
+	// Image overlay can be used to brand a video or add a visual label in the form of
+	// an image.
+	ImageOverlay param.Field[VideoAssetUploadFileParamsImageOverlay] `json:"image_overlay"`
+	// Add your metadata you want to associate with this asset.<br/> Example: <br/>
+	// <code> { "internal_video_id" : "123Abc" } </code>
+	Metadata param.Field[map[string]interface{}] `json:"metadata"`
+	// Creates `MP4` version for download purpose in case of `MPEG-DASH` or `HLS`
+	// delivery format. **Default: `false`**
+	Mp4Access param.Field[bool] `json:"mp4_access"`
+	// This transformation can be used to add padding to the video.
+	Pad param.Field[VideoAssetUploadFileParamsPad] `json:"pad"`
+	// Gumlet analyzes each input video on a wide range of visual aspects. Based on the
+	// analysis, it chooses a unique set of transcoding options for processing the
+	// video. This ensures that the output video is of optimal size and best quality.
+	// **Default: `true`**
+	PerTitleEncoding param.Field[bool] `json:"per_title_encoding"`
+	// Add this asset to a playlist.
+	PlaylistID param.Field[string] `json:"playlist_id"`
+	// Currently, the minimum supported frame size is `57600` (`240x240`) pixels for
+	// `HLS/DASH` and `21025` (`145x145`) pixels for `MP4` format. However, enabling
+	// this flag will allow Gumlet to simply put your video asset into the specified
+	// delivery format without transcoding and optimization. Enabling this flag will
+	// cause any kind of specified video transformation to be ignored if you input
+	// video asset frame size is lower than the minimum supported frame size for the
+	// specified format. **Default: `false`**
+	ProcessLowResolutionInput param.Field[bool] `json:"process_low_resolution_input"`
+	// Provide `profile_id` of the previously created video profile. This parameter
+	// will override all the parameters (except `input` and `workspace_id`) from the
+	// video profile.
+	ProfileID param.Field[string] `json:"profile_id"`
+	// Required resolutions of the transformed asset in case of HLS or MPEG-DASH
+	// delivery format. Can be a comma-separated string out of the following values:
+	// `240p`, `360p`, `480p`, `540p`, `720p`, and `1080p`. Resized rendition will
+	// retain the input aspect ratio.
+	Resolution param.Field[string] `json:"resolution"`
+	// Specify a text string or identifier which can identify an asset or bunch of
+	// assets later.
+	Tag param.Field[[]string] `json:"tag"`
+	// Text overlay can be used to brand a video or add a label in the form of text.
+	TextOverlay param.Field[VideoAssetUploadFileParamsTextOverlay] `json:"text_overlay"`
+	// Specify a text string or identifier which can be used for filtering or searching
+	// the asset.
+	Title param.Field[string] `json:"title"`
+	// Trim transformation can be used to trim videos based on time duration.
+	Trim param.Field[VideoAssetUploadFileParamsTrim] `json:"trim"`
+	// Resize video with the given width. Can be an absolute value in pixels or a
+	// percentage value with the `%` suffix. Specified values greater than the original
+	// asset width will be ignored. Applicable only when specified format is `MP4`.
+	Width param.Field[string] `json:"width"`
+}
+
+func (r VideoAssetUploadFileParams) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsFormat string
+
+const (
+	VideoAssetUploadFileParamsFormatAbr VideoAssetUploadFileParamsFormat = "ABR"
+	VideoAssetUploadFileParamsFormatMp4 VideoAssetUploadFileParamsFormat = "MP4"
+)
+
+func (r VideoAssetUploadFileParamsFormat) IsKnown() bool {
+	switch r {
+	case VideoAssetUploadFileParamsFormatAbr, VideoAssetUploadFileParamsFormatMp4:
+		return true
+	}
+	return false
+}
+
+type VideoAssetUploadFileParamsCrop struct {
+	// Height of the cropping area in pixels.
+	Height param.Field[string] `json:"height" api:"required"`
+	// Width of the cropping area in pixels.
+	Width param.Field[string] `json:"width" api:"required"`
+	// This parameter defines the horizontal coordinate value of the upper-left corner
+	// of the cropping area. Values can be an absolute number of pixels or a percentage
+	// value relative to the video width. **Default: `0`**
+	HorizontalMargin param.Field[string] `json:"horizontal_margin"`
+	// This parameter defines the vertical coordinate value of the upper-left corner of
+	// the cropping area. Values can be an absolute number of pixels or a percentage
+	// value relative to the video height. **Default: `0`**
+	VerticalMargin param.Field[string] `json:"vertical_margin"`
+}
+
+func (r VideoAssetUploadFileParamsCrop) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsPad struct {
+	// Width of padding on the bottom side. Values can be an absolute number of pixels
+	// or a percentage value relative to the video height. **Default: `%5`**
+	Bottom param.Field[string] `json:"bottom"`
+	// Color of padding area. **Default: `black`**
+	Color param.Field[string] `json:"color"`
+	// Width of padding on the left side. Values can be an absolute number of pixels or
+	// a percentage value relative to the video width. **Default: `0`**
+	Left param.Field[string] `json:"left"`
+	// Width of padding on the right side. Values can be an absolute number of pixels
+	// or a percentage value relative to the video width. **Default: `0`**
+	Right param.Field[string] `json:"right"`
+	// Width of padding on the top side. Values can be an absolute number of pixels or
+	// a percentage value relative to the video height. **Default: `%5`**
+	Top param.Field[string] `json:"top"`
+}
+
+func (r VideoAssetUploadFileParamsPad) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsTrim struct {
+	// End offset in number of seconds or in `HH:MM:SS` format.
+	EndOffset param.Field[float64] `json:"end_offset" api:"required"`
+	// Start offset in number of seconds or in `HH:MM:SS` format.
+	StartOffset param.Field[float64] `json:"start_offset" api:"required"`
+	// Duration can be used in conjunction with `start_offset` parameter, can be
+	// specified in number of seconds.
+	Duration param.Field[float64] `json:"duration"`
+}
+
+func (r VideoAssetUploadFileParamsTrim) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsImageOverlay struct {
+	// This is the required parameter for image overlay; it can be a URL to an image
+	// that needs to be overlaid.
+	URL param.Field[string] `json:"url" api:"required"`
+	// Height of the overlaid image. **Default: `image height`**
+	Height param.Field[string] `json:"height"`
+	// This parameter specifies the horizontal alignment of the overlaid image and can
+	// be either `left` or `right`. **Default: `right`**
+	HorizontalAlign param.Field[string] `json:"horizontal_align"`
+	// This parameter defines the horizontal coordinate value of the corner (determined
+	// by `horizontal_align`) of the overlay area. Values can be an absolute number of
+	// pixels or a percentage value relative to the video width. **Default: `0`**
+	HorizontalMargin param.Field[string] `json:"horizontal_margin"`
+	// This parameter specifies the vertical alignment of the overlaid image and can be
+	// either `top` or `bottom`. **Default: `bottom`**
+	VerticalAlign param.Field[string] `json:"vertical_align"`
+	// This parameter defines the vertical coordinate value of the corner (determined
+	// by `vertical_align`) of the overlay area. Values can be an absolute number of
+	// pixels or a percentage value relative to the video height. **Default: `0`**
+	VerticalMargin param.Field[string] `json:"vertical_margin"`
+	// Width of the overlaid image. **Default: `image width`**
+	Width param.Field[string] `json:"width"`
+}
+
+func (r VideoAssetUploadFileParamsImageOverlay) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsTextOverlay struct {
+	// Text to be overlaid on video.
+	Text param.Field[string] `json:"text" api:"required"`
+	// This parameter allows drawing a rectangular box over the overlaid text.
+	// **Default: `false`**
+	Box param.Field[bool] `json:"box"`
+	// Padding between the box border and the text can be specified with this parameter
+	// in pixels. **Default: `0`**
+	BoxBorder param.Field[string] `json:"box_border"`
+	// Box color can be specified with this parameter. **Default: `white`**
+	BoxColor param.Field[string] `json:"box_color"`
+	// Box opacity can be specified with this parameter. **Default: `100`**
+	BoxOpacity param.Field[string] `json:"box_opacity"`
+	// Font color for text. **Default: `black`**
+	Color param.Field[string] `json:"color"`
+	// Font family type for text. **Default: `sans`**
+	Font param.Field[string] `json:"font"`
+	// Font size in pixels. **Default: `16`**
+	FontSize param.Field[string] `json:"font_size"`
+	// This parameter specifies the horizontal alignment of the overlaid text and can
+	// be either `left` or `right`. **Default: `right`**
+	HorizontalAlign param.Field[string] `json:"horizontal_align"`
+	// This parameter defines the horizontal coordinate value of the corner (determined
+	// by `horizontal_align`) of the overlay area. Values can be an absolute number of
+	// pixels relative to the video width. **Default: `0`**
+	HorizontalMargin param.Field[string] `json:"horizontal_margin"`
+	// Overlay text opacity can be specified with opacity parameter where value can be
+	// between `0` and `100` where `0` is considered completely transparent and `100`
+	// is considered completely opaque. **Default: `100`**
+	Opacity param.Field[string] `json:"opacity"`
+	// This parameter specifies the vertical alignment of the overlaid text and can be
+	// either `top` or `bottom`. **Default: `bottom`**
+	VerticalAlign param.Field[string] `json:"vertical_align"`
+	// This parameter defines the vertical coordinate value of the corner (determined
+	// by vertical_align) of the overlay area. Values can be an absolute number of
+	// pixels relative to the video height. **Default: `0`**
+	VerticalMargin param.Field[string] `json:"vertical_margin"`
+}
+
+func (r VideoAssetUploadFileParamsTextOverlay) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsAnimatedGif struct {
+	// The time (in seconds or `HH:MM:SS` format) of the video timeline where the GIF
+	// ends. Defaults to `10` seconds after the start_offset. Maximum duration of GIF
+	// is limited to `10` seconds.
+	EndOffset param.Field[string] `json:"end_offset"`
+	// The frame rate of the generated GIF. Defaults to `15` fps. Max `30` fps.
+	Fps param.Field[string] `json:"fps"`
+	// The height in pixels (or in percentage value of asset height) of the animated
+	// GIF. Max height is `640px`.
+	Height param.Field[string] `json:"height"`
+	// The time (in seconds or `HH:MM:SS` format) of the video timeline where the
+	// animated gif should begin. **Default: `0`**
+	StartOffset param.Field[string] `json:"start_offset"`
+	// The width in pixels (or in percentage value of asset width) of the animated GIF.
+	// Max width is `640px`.
+	Width param.Field[string] `json:"width"`
+}
+
+func (r VideoAssetUploadFileParamsAnimatedGif) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsAdditionalTrack struct {
+	// The language code value represents BCP 47 specification compliant value. For
+	// example, en for English.
+	LanguageCode param.Field[string] `json:"language_code" api:"required"`
+	// Type of additional track. Value can be either audio or subtitle.
+	Type param.Field[string] `json:"type" api:"required"`
+	// URL or web address of a file that Gumlet should download to add a stream.
+	URL param.Field[string] `json:"url" api:"required"`
+	// The name of the track containing a human-readable description.
+	Name param.Field[string] `json:"name"`
+}
+
+func (r VideoAssetUploadFileParamsAdditionalTrack) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsGenerateSubtitles struct {
+	// Language code for native language of the audio.
+	AudioLanguage param.Field[string] `json:"audio_language"`
+	// Comma separated string of language codes for which subtitle needs to be
+	// generated. Maximum four language codes are allowed.
+	SubtitleLanguages param.Field[string] `json:"subtitle_languages"`
+}
+
+func (r VideoAssetUploadFileParamsGenerateSubtitles) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+type VideoAssetUploadFileParamsCallToAction struct {
+	// hex code of color
+	BackgroundColor param.Field[string] `json:"background_color"`
+	EndTime         param.Field[int64]  `json:"end_time"`
+	// hex value of color
+	FontColor param.Field[string] `json:"font_color"`
+	// number of pixels from right
+	PositionFromRight param.Field[int64] `json:"position_from_right"`
+	// number of pixels from top
+	PositionFromTop param.Field[int64]  `json:"position_from_top"`
+	StartTime       param.Field[int64]  `json:"start_time"`
+	Text            param.Field[string] `json:"text"`
+	URL             param.Field[string] `json:"url"`
+}
+
+func (r VideoAssetUploadFileParamsCallToAction) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
 type VideoAssetNewResponse struct {
 	// Asset ID of created asset.
 	AssetID string `json:"asset_id"`
@@ -1883,6 +2278,82 @@ func (r *VideoAssetAnalyticsResponse) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (r videoAssetAnalyticsResponseJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadFileResponse struct {
+	// Asset ID of the created asset
+	AssetID string `json:"asset_id"`
+	// Created at timestamp in milliseconds since epoch
+	CreatedAt int64                             `json:"created_at"`
+	Input     VideoAssetUploadFileResponseInput `json:"input"`
+	// Output data information
+	Output VideoAssetUploadFileResponseOutput `json:"output"`
+	// Information about playlists
+	Playlists []string `json:"playlists"`
+	// Processing progress percentage number between 0 and 100
+	Progress int64 `json:"progress"`
+	// Status of asset
+	Status string   `json:"status"`
+	Tag    []string `json:"tag"`
+	// Updated at timestamp in milliseconds since epoch
+	UpdatedAt int64 `json:"updated_at"`
+	// Upload URL on which you need to send actual file using PUT request
+	UploadURL string `json:"upload_url"`
+	// Workdspace ID
+	WorkspaceID string                           `json:"workspace_id"`
+	JSON        videoAssetUploadFileResponseJSON `json:"-"`
+}
+
+// videoAssetUploadFileResponseJSON contains the JSON metadata for the struct [VideoAssetUploadFileResponse]
+type videoAssetUploadFileResponseJSON struct {
+	AssetID     apijson.Field
+	CreatedAt   apijson.Field
+	Input       apijson.Field
+	Output      apijson.Field
+	Playlists   apijson.Field
+	Progress    apijson.Field
+	Status      apijson.Field
+	Tag         apijson.Field
+	UpdatedAt   apijson.Field
+	UploadURL   apijson.Field
+	WorkspaceID apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadFileResponse) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadFileResponseJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadThumbnailResponse struct {
+	// Asset ID
+	AssetID string `json:"asset_id"`
+	// Thumbnail updated at timestamp in milliseconds since epoch
+	ThumbnailUpdatedAt int64 `json:"thumbnail_updated_at"`
+	// Upload URL on which new thumbnail must be uploaded using a PUT request
+	UploadURL string                                `json:"upload_url"`
+	JSON      videoAssetUploadThumbnailResponseJSON `json:"-"`
+}
+
+// videoAssetUploadThumbnailResponseJSON contains the JSON metadata for the struct [VideoAssetUploadThumbnailResponse]
+type videoAssetUploadThumbnailResponseJSON struct {
+	AssetID            apijson.Field
+	ThumbnailUpdatedAt apijson.Field
+	UploadURL          apijson.Field
+	raw                string
+	ExtraFields        map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadThumbnailResponse) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadThumbnailResponseJSON) RawJSON() string {
 	return r.raw
 }
 
@@ -2530,6 +3001,64 @@ func (r videoAssetAnalyticsResponseWidgetDataJSON) RawJSON() string {
 	return r.raw
 }
 
+type VideoAssetUploadFileResponseInput struct {
+	CallToActions   []VideoAssetUploadFileResponseInputCallToAction  `json:"call_to_actions"`
+	Description     string                                           `json:"description"`
+	Metadata        VideoAssetUploadFileResponseInputMetadata        `json:"metadata"`
+	ProfileID       string                                           `json:"profile_id"`
+	SourceURL       string                                           `json:"source_url"`
+	Title           string                                           `json:"title"`
+	Transformations VideoAssetUploadFileResponseInputTransformations `json:"transformations"`
+	JSON            videoAssetUploadFileResponseInputJSON            `json:"-"`
+}
+
+// videoAssetUploadFileResponseInputJSON contains the JSON metadata for the struct [VideoAssetUploadFileResponseInput]
+type videoAssetUploadFileResponseInputJSON struct {
+	CallToActions   apijson.Field
+	Description     apijson.Field
+	Metadata        apijson.Field
+	ProfileID       apijson.Field
+	SourceURL       apijson.Field
+	Title           apijson.Field
+	Transformations apijson.Field
+	raw             string
+	ExtraFields     map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadFileResponseInput) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadFileResponseInputJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadFileResponseOutput struct {
+	Format       string                                 `json:"format"`
+	PlaybackURL  string                                 `json:"playback_url"`
+	StatusURL    string                                 `json:"status_url"`
+	ThumbnailURL []string                               `json:"thumbnail_url"`
+	JSON         videoAssetUploadFileResponseOutputJSON `json:"-"`
+}
+
+// videoAssetUploadFileResponseOutputJSON contains the JSON metadata for the struct [VideoAssetUploadFileResponseOutput]
+type videoAssetUploadFileResponseOutputJSON struct {
+	Format       apijson.Field
+	PlaybackURL  apijson.Field
+	StatusURL    apijson.Field
+	ThumbnailURL apijson.Field
+	raw          string
+	ExtraFields  map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadFileResponseOutput) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadFileResponseOutputJSON) RawJSON() string {
+	return r.raw
+}
+
 type VideoAssetNewResponseInputTransformations struct {
 	AudioCodec       []string                                      `json:"audio_codec"`
 	Format           string                                        `json:"format"`
@@ -2978,6 +3507,90 @@ func (r *VideoAssetAnalyticsResponseWidgetDataWidgetData) UnmarshalJSON(data []b
 }
 
 func (r videoAssetAnalyticsResponseWidgetDataWidgetDataJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadFileResponseInputTransformations struct {
+	AudioCodec       []string                                             `json:"audio_codec"`
+	Format           string                                               `json:"format"`
+	Mp4Access        bool                                                 `json:"mp4_access"`
+	OriginalDeleted  bool                                                 `json:"original_deleted"`
+	PerTitleEncoding bool                                                 `json:"per_title_encoding"`
+	Resolution       []string                                             `json:"resolution"`
+	Thumbnail        []string                                             `json:"thumbnail"`
+	ThumbnailFormat  string                                               `json:"thumbnail_format"`
+	VideoCodec       []string                                             `json:"video_codec"`
+	JSON             videoAssetUploadFileResponseInputTransformationsJSON `json:"-"`
+}
+
+// videoAssetUploadFileResponseInputTransformationsJSON contains the JSON metadata for the struct [VideoAssetUploadFileResponseInputTransformations]
+type videoAssetUploadFileResponseInputTransformationsJSON struct {
+	AudioCodec       apijson.Field
+	Format           apijson.Field
+	Mp4Access        apijson.Field
+	OriginalDeleted  apijson.Field
+	PerTitleEncoding apijson.Field
+	Resolution       apijson.Field
+	Thumbnail        apijson.Field
+	ThumbnailFormat  apijson.Field
+	VideoCodec       apijson.Field
+	raw              string
+	ExtraFields      map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadFileResponseInputTransformations) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadFileResponseInputTransformationsJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadFileResponseInputMetadata struct {
+	Headermeta string                                        `json:"headermeta"`
+	JSON       videoAssetUploadFileResponseInputMetadataJSON `json:"-"`
+}
+
+// videoAssetUploadFileResponseInputMetadataJSON contains the JSON metadata for the struct [VideoAssetUploadFileResponseInputMetadata]
+type videoAssetUploadFileResponseInputMetadataJSON struct {
+	Headermeta  apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadFileResponseInputMetadata) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadFileResponseInputMetadataJSON) RawJSON() string {
+	return r.raw
+}
+
+type VideoAssetUploadFileResponseInputCallToAction struct {
+	EndTime    int64                                             `json:"end_time"`
+	HTMLTarget string                                            `json:"html_target"`
+	StartTime  int64                                             `json:"start_time"`
+	Text       string                                            `json:"text"`
+	URL        string                                            `json:"url"`
+	JSON       videoAssetUploadFileResponseInputCallToActionJSON `json:"-"`
+}
+
+// videoAssetUploadFileResponseInputCallToActionJSON contains the JSON metadata for the struct [VideoAssetUploadFileResponseInputCallToAction]
+type videoAssetUploadFileResponseInputCallToActionJSON struct {
+	EndTime     apijson.Field
+	HTMLTarget  apijson.Field
+	StartTime   apijson.Field
+	Text        apijson.Field
+	URL         apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *VideoAssetUploadFileResponseInputCallToAction) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r videoAssetUploadFileResponseInputCallToActionJSON) RawJSON() string {
 	return r.raw
 }
 

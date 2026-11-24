@@ -71,6 +71,44 @@ func WithHTTPClient(client HTTPClient) RequestOption {
 	})
 }
 
+// SignedUploadTransport marks an [http.RoundTripper] or [HTTPClient] of the caller's own as one the
+// SDK's signed uploads are sent through.
+//
+// A signed upload sends its file to a host the API's response names, not to this API. Unless what
+// was given to [WithHTTPClient] is marked, the upload never goes through the caller's code: a plain
+// [*http.Transport] is cloned, so its proxy and TLS settings apply, and any other RoundTripper or
+// HTTPClient, which may add headers or credentials of its own to whatever it sends, is left behind
+// for a transport of the SDK's own and the proxy settings in the environment. Implement this on a
+// RoundTripper or HTTPClient that is how the application reaches the network (a proxy or TLS setup
+// only it knows) to send uploads through it instead.
+//
+// Implement it only on one that sends each request as it is handed over: one that adds no
+// credentials, cookies or headers of its own, and follows no redirect. Every header it adds reaches
+// the upload host. The SDK hands it the upload with no Authorization, no default header or query of
+// the client's and no middleware, and keeps the upload URL's signature out of the errors it returns.
+// It refuses a redirect a RoundTripper hands back, and fails the upload when an HTTPClient reports
+// that it followed one (its response's Request carries the redirect's Response, as an
+// [*http.Client]'s does); a RoundTripper that follows redirects itself re-sends the file unseen.
+// Without a request timeout, each attempt through it fails after 10 minutes without progress. The
+// SDK bounds each attempt itself even when the code ignores the request's context: it gives up once
+// the attempt's timeout or the caller's cancel ends it, while the abandoned attempt runs on in your
+// code until that returns. An upload URL with a user name or password is refused before it is handed
+// anything.
+//
+// The marker is read off the HTTPClient given to WithHTTPClient, or off that [*http.Client]'s
+// Transport, so a wrapper around a marked one is marked only if it implements this itself. Go's
+// embedding counts: a type that embeds a marked one, by value or by pointer, has its method, so it is
+// marked too, while one that holds it in a field of interface type is not. It is
+// never read off [http.DefaultTransport], even when that is passed as a client's Transport: the
+// process's transport is not the caller's to lend, so an upload falls back as for an unmarked one.
+// A RoundTripper of http.DefaultTransport's own type that cannot be compared with it (a func, say)
+// may be it, so it falls back too. A call that should upload on the SDK's own transport passes a
+// client that is not marked.
+type SignedUploadTransport interface {
+	// SignedUploadTransport does nothing: implementing it is the declaration.
+	SignedUploadTransport()
+}
+
 // MiddlewareNext is a function which is called by a middleware to pass an HTTP request
 // to the next stage in the middleware chain.
 type MiddlewareNext = func(*http.Request) (*http.Response, error)

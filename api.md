@@ -18,6 +18,8 @@ Complete reference of every operation, grouped by resource. See [the README](./R
   - [Bulk Delete](#bulk-delete)
   - [Bulk Tag](#bulk-tag)
   - [Asset Analytics](#asset-analytics)
+  - [Create Asset Direct Upload](#create-asset-direct-upload-1)
+  - [Upload a thumbnail file](#upload-a-thumbnail-file)
 - [`SubtitleUpload`](#subtitleupload)
   - [Upload Subtitles](#upload-subtitles)
   - [Complete Subtitle Upload](#complete-subtitle-upload)
@@ -171,24 +173,6 @@ This endpoint creates a video asset allowing upload of a video from the local fi
 ```go
 videoAsset, err := client.VideoAssets.Upload(context.Background(), sdk.VideoAssetUploadParams{
 	WorkspaceID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-	CallToActions: sdk.F[[]sdk.VideoAssetUploadParamsCallToAction]([]sdk.VideoAssetUploadParamsCallToAction{sdk.VideoAssetUploadParamsCallToAction{
-		Text:              sdk.F[string]("some test"),
-		URL:               sdk.F[string]("https://some-url.com"),
-		StartTime:         sdk.F[int64](1),
-		EndTime:           sdk.F[int64](90),
-		FontColor:         sdk.F[string]("#000001"),
-		BackgroundColor:   sdk.F[string]("#ffffff"),
-		PositionFromTop:   sdk.F[int64](11),
-		PositionFromRight: sdk.F[int64](23),
-	}}),
-	CollectionID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
-	Description:  sdk.F[string]("some description"),
-	Folder:       sdk.F[string]("697375fbfa2d1037283140e4"),
-	Format:       sdk.F[sdk.VideoAssetUploadParamsFormat](sdk.VideoAssetUploadParamsFormat("ABR")),
-	Metadata:     sdk.F[map[string]interface{}](map[string]interface{}{}),
-	PlaylistID:   sdk.F[string]("6597acd5ed6f26a9c5ca9633"),
-	ProfileID:    sdk.F[string]("646df1c9173a4a2fcac180b7"),
-	Tag:          sdk.F[[]string]([]string{"ball"}),
 })
 if err != nil {
 	panic(err)
@@ -433,6 +417,43 @@ videoAsset, err := client.VideoAssets.Analytics(context.Background(), "assetId",
 	GroupBy: sdk.F[sdk.VideoAssetAnalyticsParamsGroupBy](sdk.VideoAssetAnalyticsParamsGroupBy("daily")),
 	Metrics: sdk.F[[]sdk.VideoAssetAnalyticsParamsMetric]([]sdk.VideoAssetAnalyticsParamsMetric{"impressions"}),
 })
+if err != nil {
+	panic(err)
+}
+
+fmt.Println(videoAsset)
+```
+
+### Create Asset Direct Upload
+
+This endpoint creates a video asset allowing upload of a video from the local file system and ingest media content into the Gumlet system for processing and delivery. Body parameters are the same as the Create Asset body parameters except for the `input` parameter, which this endpoint does not take. A successful response will be returned with `upload_url` field. You can make `PUT` request to that URL to upload video. To upload video using `upload_url` refer to [this](https://docs.gumlet.com/docs/direct-upload#2-use-the-url-to-upload-a-file).
+
+| Direction | Type |
+| --- | --- |
+| Request | [`VideoAssetUploadFileParams`](./videoasset.go) |
+| Response | [`VideoAssetUploadFileResponse`](./videoasset.go) |
+
+```go
+videoAsset, err := client.VideoAssets.UploadFile(context.Background(), strings.NewReader("file contents"), sdk.VideoAssetUploadFileParams{
+	WorkspaceID: sdk.F[string]("646df1c9173a4a2fcac180b4"),
+})
+if err != nil {
+	panic(err)
+}
+
+fmt.Println(videoAsset)
+```
+
+### Upload a thumbnail file
+
+Requests a thumbnail upload URL for the asset and PUTs the file to it.
+
+| Direction | Type |
+| --- | --- |
+| Response | [`VideoAssetUploadThumbnailResponse`](./videoasset.go) |
+
+```go
+videoAsset, err := client.VideoAssets.UploadThumbnail(context.Background(), "assetId", strings.NewReader("file contents"))
 if err != nil {
 	panic(err)
 }
