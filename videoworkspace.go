@@ -51,6 +51,7 @@ func NewVideoWorkspaceService(opts ...option.RequestOption) (r *VideoWorkspaceSe
 // Example:
 //
 //	videoWorkspace, err := client.VideoWorkspaces.List(context.Background(), sdk.VideoWorkspaceListParams{
+//		OrderBy:    sdk.F[sdk.VideoWorkspaceListParamsOrderBy](sdk.VideoWorkspaceListParamsOrderBy("asc")),
 //		PageNumber: sdk.F[int64](1),
 //		PageSize:   sdk.F[int64](20),
 //	})
@@ -205,6 +206,8 @@ type VideoWorkspaceListParams struct {
 	// Cursor for the next page. Pass the `next_page_token` value returned in the
 	// previous response.
 	NextPageToken param.Field[string] `query:"next_page_token"`
+	// Sort direction for the workspace list (`asc` or `desc`). **Default: `asc`**.
+	OrderBy param.Field[VideoWorkspaceListParamsOrderBy] `query:"order_by"`
 	// Page number to retrieve. Starts at `1`.
 	PageNumber param.Field[int64] `query:"page_number"`
 	// Number of items to return per page. **Default: `20`**. **Maximum: `200`**.
@@ -217,6 +220,21 @@ func (r VideoWorkspaceListParams) URLQuery() (v url.Values) {
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
 	})
+}
+
+type VideoWorkspaceListParamsOrderBy string
+
+const (
+	VideoWorkspaceListParamsOrderByAsc  VideoWorkspaceListParamsOrderBy = "asc"
+	VideoWorkspaceListParamsOrderByDesc VideoWorkspaceListParamsOrderBy = "desc"
+)
+
+func (r VideoWorkspaceListParamsOrderBy) IsKnown() bool {
+	switch r {
+	case VideoWorkspaceListParamsOrderByAsc, VideoWorkspaceListParamsOrderByDesc:
+		return true
+	}
+	return false
 }
 
 type VideoWorkspaceNewParams struct {
