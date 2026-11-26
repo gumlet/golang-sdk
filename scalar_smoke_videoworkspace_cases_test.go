@@ -18,6 +18,7 @@ func TestScalarSmokeVideoWorkspaceService(t *testing.T) {
 		client := scalarSmokeClient
 		{
 			videoWorkspace, err := client.VideoWorkspaces.List(context.Background(), sdk.VideoWorkspaceListParams{
+				OrderBy:    sdk.F[sdk.VideoWorkspaceListParamsOrderBy](sdk.VideoWorkspaceListParamsOrderBy("asc")),
 				PageNumber: sdk.F[int64](1),
 				PageSize:   sdk.F[int64](20),
 			})
@@ -33,6 +34,7 @@ func TestScalarSmokeVideoWorkspaceService(t *testing.T) {
 		{
 			videoWorkspace, err := client.VideoWorkspaces.List(context.Background(), sdk.VideoWorkspaceListParams{
 				NextPageToken: sdk.F[string]("nextPageToken"),
+				OrderBy:       sdk.F[sdk.VideoWorkspaceListParamsOrderBy](sdk.VideoWorkspaceListParamsOrderBy("asc")),
 				PageNumber:    sdk.F[int64](1),
 				PageSize:      sdk.F[int64](20),
 			})

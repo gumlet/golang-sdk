@@ -1486,6 +1486,7 @@ Pagination uses `page_number` / `page_size` (max page size 200). Use `next_page_
 
 ```go
 videoWorkspace, err := client.VideoWorkspaces.List(context.Background(), sdk.VideoWorkspaceListParams{
+	OrderBy:    sdk.F[sdk.VideoWorkspaceListParamsOrderBy](sdk.VideoWorkspaceListParamsOrderBy("asc")),
 	PageNumber: sdk.F[int64](1),
 	PageSize:   sdk.F[int64](20),
 })
