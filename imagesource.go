@@ -84,6 +84,7 @@ func (r *ImageSourceService) New(ctx context.Context, body ImageSourceNewParams,
 // Example:
 //
 //	imageSource, err := client.ImageSources.List(context.Background(), sdk.ImageSourceListParams{
+//		OrderBy:    sdk.F[sdk.ImageSourceListParamsOrderBy](sdk.ImageSourceListParamsOrderBy("asc")),
 //		PageNumber: sdk.F[int64](1),
 //		PageSize:   sdk.F[int64](20),
 //	})
@@ -451,6 +452,8 @@ type ImageSourceListParams struct {
 	// Cursor for the next page. Pass the `next_page_token` value returned in the
 	// previous response.
 	NextPageToken param.Field[string] `query:"next_page_token"`
+	// Sort direction for the image source list (`asc` or `desc`). **Default: `asc`**.
+	OrderBy param.Field[ImageSourceListParamsOrderBy] `query:"order_by"`
 	// Page number to retrieve. Starts at `1`.
 	PageNumber param.Field[int64] `query:"page_number"`
 	// Number of items to return per page. **Default: `20`**. **Maximum: `100`**.
@@ -463,6 +466,21 @@ func (r ImageSourceListParams) URLQuery() (v url.Values) {
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
 	})
+}
+
+type ImageSourceListParamsOrderBy string
+
+const (
+	ImageSourceListParamsOrderByAsc  ImageSourceListParamsOrderBy = "asc"
+	ImageSourceListParamsOrderByDesc ImageSourceListParamsOrderBy = "desc"
+)
+
+func (r ImageSourceListParamsOrderBy) IsKnown() bool {
+	switch r {
+	case ImageSourceListParamsOrderByAsc, ImageSourceListParamsOrderByDesc:
+		return true
+	}
+	return false
 }
 
 type ImageSourceUpdateParams struct {
