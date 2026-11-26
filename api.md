@@ -1129,6 +1129,7 @@ Pagination uses `page_number` / `page_size`. Use `next_page_token` for cursor-ba
 
 ```go
 imageSource, err := client.ImageSources.List(context.Background(), sdk.ImageSourceListParams{
+	OrderBy:    sdk.F[sdk.ImageSourceListParamsOrderBy](sdk.ImageSourceListParamsOrderBy("asc")),
 	PageNumber: sdk.F[int64](1),
 	PageSize:   sdk.F[int64](20),
 })
