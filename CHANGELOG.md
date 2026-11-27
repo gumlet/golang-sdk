@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.1](https://github.com/gumlet/golang-sdk/compare/v1.1.2...v1.2.1) (2026-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **api:** response-shape GET org/webhook/{p}/history→ — shape kinds differ (struct vs array) (breaking: changed in a way existing callers can observe)
+
+### Features
+
+* **api:** add operation-coverage GET org/webhooks/{p} (+2 more changes) ([dac6953](https://github.com/gumlet/golang-sdk/commit/dac69537a5707024d61fc4910187bd3f75960a5e))
+* **api:** update SDK surface (2 changes) ([b08f02c](https://github.com/gumlet/golang-sdk/commit/b08f02cd2dde1544576ab50b3607b8181e29a1c6))
+* **api:** update SDK surface (2 changes) ([0cbaa66](https://github.com/gumlet/golang-sdk/commit/0cbaa66289b12470a44d76e9e12d4910b76c15cf))
+* **api:** update SDK surface (5 changes) ([f2e05ce](https://github.com/gumlet/golang-sdk/commit/f2e05ce5fe237e66f7d04c65b051da7b1841a22b))
+
+
+### Chores
+
+* release 1.2.1 ([3eb98d3](https://github.com/gumlet/golang-sdk/commit/3eb98d35bdeb9d01bf8af6a826dfb91271c83151))
+
 ## [1.1.2](https://github.com/gumlet/golang-sdk/compare/v1.1.1...v1.1.2) (2026-11-24)
 
 
