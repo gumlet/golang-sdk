@@ -33,6 +33,37 @@ func NewWebhookEndpointService(opts ...option.RequestOption) (r *WebhookEndpoint
 	return
 }
 
+// Retrieve details of a single webhook by ID.
+//
+// Parameters:
+//
+//	ctx: Context for the request.
+//	webhookID: Webhook ID. You can get it using the list webhooks endpoint.
+//	opts: Options to apply to this request.
+//
+// Returns:
+//
+//	*WebhookEndpointGetResponse: Successful response
+//
+// Example:
+//
+//	webhookEndpoint, err := client.WebhookEndpoints.Get(context.Background(), "webhookId")
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	fmt.Println(webhookEndpoint)
+func (r *WebhookEndpointService) Get(ctx context.Context, webhookID string, opts ...option.RequestOption) (res *WebhookEndpointGetResponse, err error) {
+	opts = slices.Concat(r.Options, opts)
+	if webhookID == "" {
+		err = errors.New("missing required webhook_id parameter")
+		return nil, err
+	}
+	path := fmt.Sprintf("org/webhooks/%s", url.PathEscape(webhookID))
+	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
+	return res, err
+}
+
 // Creates a new webhook listener. Gumlet POSTs JSON to `url` for each matching event and sends `secret_token` in the `x-gumlet-token` header. Payload schemas are documented in the webhooks section.
 //
 // Parameters:
@@ -331,6 +362,50 @@ func (r WebhookEndpointHistoryParams) URLQuery() (v url.Values) {
 	})
 }
 
+type WebhookEndpointGetResponse struct {
+	// Webhook ID
+	ID string `json:"id" api:"required"`
+	// Creation timestamp in ISO 8601 format
+	CreatedAt   string   `json:"created_at"`
+	LiveSources []string `json:"live_sources"`
+	// Secret you supplied when creating the webhook. Gumlet sends this value in the
+	// `x-gumlet-token` header of each webhook POST.
+	SecretToken string `json:"secret_token"`
+	// List of workspace IDs for which the webhook is enabled.
+	Sources []string `json:"sources"`
+	// Events that invoke this webhook. `status` subscribes to every video asset status
+	// event. `live-video-status` subscribes to every live video status event. Any
+	// other value subscribes to that event only.
+	Triggers []WebhookEndpointGetResponseTrigger `json:"triggers"`
+	// Update timestamp in ISO 8601 format
+	UpdatedAt string `json:"updated_at"`
+	// Webhook URL
+	URL  string                         `json:"url" api:"nullable"`
+	JSON webhookEndpointGetResponseJSON `json:"-"`
+}
+
+// webhookEndpointGetResponseJSON contains the JSON metadata for the struct [WebhookEndpointGetResponse]
+type webhookEndpointGetResponseJSON struct {
+	ID          apijson.Field
+	CreatedAt   apijson.Field
+	LiveSources apijson.Field
+	SecretToken apijson.Field
+	Sources     apijson.Field
+	Triggers    apijson.Field
+	UpdatedAt   apijson.Field
+	URL         apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *WebhookEndpointGetResponse) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r webhookEndpointGetResponseJSON) RawJSON() string {
+	return r.raw
+}
+
 type WebhookEndpointNewResponse struct {
 	// Webhook ID
 	ID          string   `json:"id"`
@@ -452,6 +527,46 @@ func (r *WebhookEndpointHistoryResponse) UnmarshalJSON(data []byte) (err error) 
 
 func (r webhookEndpointHistoryResponseJSON) RawJSON() string {
 	return r.raw
+}
+
+type WebhookEndpointGetResponseTrigger string
+
+const (
+	WebhookEndpointGetResponseTriggerVideoStatusCreated          WebhookEndpointGetResponseTrigger = "video.status.created"
+	WebhookEndpointGetResponseTriggerVideoStatusDownloaded       WebhookEndpointGetResponseTrigger = "video.status.downloaded"
+	WebhookEndpointGetResponseTriggerVideoStatusOptimized        WebhookEndpointGetResponseTrigger = "video.status.optimized"
+	WebhookEndpointGetResponseTriggerVideoStatusReady            WebhookEndpointGetResponseTrigger = "video.status.ready"
+	WebhookEndpointGetResponseTriggerVideoStatusErrored          WebhookEndpointGetResponseTrigger = "video.status.errored"
+	WebhookEndpointGetResponseTriggerVideoStatusDeleted          WebhookEndpointGetResponseTrigger = "video.status.deleted"
+	WebhookEndpointGetResponseTriggerVideoStatusRepackaged       WebhookEndpointGetResponseTrigger = "video.status.repackaged"
+	WebhookEndpointGetResponseTriggerVideoStatusStreamReady      WebhookEndpointGetResponseTrigger = "video.status.stream_ready"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusCreated      WebhookEndpointGetResponseTrigger = "live.video.status.created"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusReady        WebhookEndpointGetResponseTrigger = "live.video.status.ready"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusPreparing    WebhookEndpointGetResponseTrigger = "live.video.status.preparing"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusConnected    WebhookEndpointGetResponseTrigger = "live.video.status.connected"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusActive       WebhookEndpointGetResponseTrigger = "live.video.status.active"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusComplete     WebhookEndpointGetResponseTrigger = "live.video.status.complete"
+	WebhookEndpointGetResponseTriggerLiveVideoStatusDisconnected WebhookEndpointGetResponseTrigger = "live.video.status.disconnected"
+	WebhookEndpointGetResponseTriggerEventEmbedViewed            WebhookEndpointGetResponseTrigger = "event.embed.viewed"
+	WebhookEndpointGetResponseTriggerEventEmbedCtaClicked        WebhookEndpointGetResponseTrigger = "event.embed.cta_clicked"
+	WebhookEndpointGetResponseTriggerEventVideoUpdated           WebhookEndpointGetResponseTrigger = "event.video.updated"
+	WebhookEndpointGetResponseTriggerEventVideoUploaded          WebhookEndpointGetResponseTrigger = "event.video.uploaded"
+	WebhookEndpointGetResponseTriggerEventPlaylistCreated        WebhookEndpointGetResponseTrigger = "event.playlist.created"
+	WebhookEndpointGetResponseTriggerEventPlaylistAsset          WebhookEndpointGetResponseTrigger = "event.playlist.asset"
+	WebhookEndpointGetResponseTriggerEventPlaylistDeleted        WebhookEndpointGetResponseTrigger = "event.playlist.deleted"
+	WebhookEndpointGetResponseTriggerEventVideoAnalytics         WebhookEndpointGetResponseTrigger = "event.video.analytics"
+	WebhookEndpointGetResponseTriggerEventImageAnalytics         WebhookEndpointGetResponseTrigger = "event.image.analytics"
+	WebhookEndpointGetResponseTriggerEventEmbedFormSubmitted     WebhookEndpointGetResponseTrigger = "event.embed.form_submitted"
+	WebhookEndpointGetResponseTriggerEventCommentAll             WebhookEndpointGetResponseTrigger = "event.comment.all"
+	WebhookEndpointGetResponseTriggerEventChannelMemberJoined    WebhookEndpointGetResponseTrigger = "event.channel.member_joined"
+)
+
+func (r WebhookEndpointGetResponseTrigger) IsKnown() bool {
+	switch r {
+	case WebhookEndpointGetResponseTriggerVideoStatusCreated, WebhookEndpointGetResponseTriggerVideoStatusDownloaded, WebhookEndpointGetResponseTriggerVideoStatusOptimized, WebhookEndpointGetResponseTriggerVideoStatusReady, WebhookEndpointGetResponseTriggerVideoStatusErrored, WebhookEndpointGetResponseTriggerVideoStatusDeleted, WebhookEndpointGetResponseTriggerVideoStatusRepackaged, WebhookEndpointGetResponseTriggerVideoStatusStreamReady, WebhookEndpointGetResponseTriggerLiveVideoStatusCreated, WebhookEndpointGetResponseTriggerLiveVideoStatusReady, WebhookEndpointGetResponseTriggerLiveVideoStatusPreparing, WebhookEndpointGetResponseTriggerLiveVideoStatusConnected, WebhookEndpointGetResponseTriggerLiveVideoStatusActive, WebhookEndpointGetResponseTriggerLiveVideoStatusComplete, WebhookEndpointGetResponseTriggerLiveVideoStatusDisconnected, WebhookEndpointGetResponseTriggerEventEmbedViewed, WebhookEndpointGetResponseTriggerEventEmbedCtaClicked, WebhookEndpointGetResponseTriggerEventVideoUpdated, WebhookEndpointGetResponseTriggerEventVideoUploaded, WebhookEndpointGetResponseTriggerEventPlaylistCreated, WebhookEndpointGetResponseTriggerEventPlaylistAsset, WebhookEndpointGetResponseTriggerEventPlaylistDeleted, WebhookEndpointGetResponseTriggerEventVideoAnalytics, WebhookEndpointGetResponseTriggerEventImageAnalytics, WebhookEndpointGetResponseTriggerEventEmbedFormSubmitted, WebhookEndpointGetResponseTriggerEventCommentAll, WebhookEndpointGetResponseTriggerEventChannelMemberJoined:
+		return true
+	}
+	return false
 }
 
 type WebhookEndpointListResponseAllWebhook struct {

@@ -14,6 +14,17 @@ import (
 
 func TestScalarSmokeWebhookEndpointService(t *testing.T) {
 	t.Parallel()
+	scalarSmokeCase(t, "webhookEndpoints.retrieve:single", "retrieve", "/org/webhooks/{webhook_id}", "retrieve", func() {
+		client := scalarSmokeClient
+		{
+			webhookEndpoint, err := client.WebhookEndpoints.Get(context.Background(), "webhookId")
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println(webhookEndpoint)
+		}
+	})
 	scalarSmokeCase(t, "webhookEndpoints.create:single", "create", "/org/webhooks", "create", func() {
 		client := scalarSmokeClient
 		{
