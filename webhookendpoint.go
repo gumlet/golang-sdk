@@ -154,7 +154,7 @@ func (r *WebhookEndpointService) Delete(ctx context.Context, webhookID string, o
 	return res, err
 }
 
-// Get logs history for a given webhook.
+// Get delivery history logs for a given webhook.
 //
 // Pagination uses `page_number` / `page_size`. Use `next_page_token` for cursor-based pagination.
 //
@@ -167,7 +167,7 @@ func (r *WebhookEndpointService) Delete(ctx context.Context, webhookID string, o
 //
 // Returns:
 //
-//	*[]map[string]interface{}: Successful response
+//	*WebhookEndpointHistoryResponse: Successful response
 //
 // Example:
 //
@@ -180,7 +180,7 @@ func (r *WebhookEndpointService) Delete(ctx context.Context, webhookID string, o
 //	}
 //
 //	fmt.Println(webhookEndpoint)
-func (r *WebhookEndpointService) History(ctx context.Context, webhookID string, query WebhookEndpointHistoryParams, opts ...option.RequestOption) (res *[]map[string]interface{}, err error) {
+func (r *WebhookEndpointService) History(ctx context.Context, webhookID string, query WebhookEndpointHistoryParams, opts ...option.RequestOption) (res *WebhookEndpointHistoryResponse, err error) {
 	opts = slices.Concat(r.Options, opts)
 	if webhookID == "" {
 		err = errors.New("missing required webhook_id parameter")
@@ -420,6 +420,40 @@ func (r webhookEndpointUpdateResponseJSON) RawJSON() string {
 	return r.raw
 }
 
+type WebhookEndpointHistoryResponse struct {
+	// Webhook trigger history events for this page.
+	History []WebhookEndpointHistoryResponseHistory `json:"history" api:"required"`
+	// Total number of history events.
+	TotalCount int64 `json:"total_count" api:"required"`
+	// Offset after this page of results.
+	CurrentOffset int64 `json:"current_offset"`
+	// Cursor for the next page when more results exist. Empty string when there is no
+	// next page.
+	NextPageToken string `json:"next_page_token"`
+	// Page size used for this response when it differs from the default.
+	PageSize int64                              `json:"page_size"`
+	JSON     webhookEndpointHistoryResponseJSON `json:"-"`
+}
+
+// webhookEndpointHistoryResponseJSON contains the JSON metadata for the struct [WebhookEndpointHistoryResponse]
+type webhookEndpointHistoryResponseJSON struct {
+	History       apijson.Field
+	TotalCount    apijson.Field
+	CurrentOffset apijson.Field
+	NextPageToken apijson.Field
+	PageSize      apijson.Field
+	raw           string
+	ExtraFields   map[string]apijson.Field
+}
+
+func (r *WebhookEndpointHistoryResponse) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r webhookEndpointHistoryResponseJSON) RawJSON() string {
+	return r.raw
+}
+
 type WebhookEndpointListResponseAllWebhook struct {
 	// Webhook ID
 	ID string `json:"id" api:"required"`
@@ -464,6 +498,44 @@ func (r webhookEndpointListResponseAllWebhookJSON) RawJSON() string {
 	return r.raw
 }
 
+type WebhookEndpointHistoryResponseHistory struct {
+	// Webhook event ID
+	ID string `json:"id" api:"required"`
+	// Asset ID for which the event was fired.
+	AssetID string `json:"asset_id" api:"required"`
+	// Event timestamp in ISO 8601 format.
+	CreatedAt string `json:"created_at" api:"required"`
+	// Webhook event name.
+	Event WebhookEndpointHistoryResponseHistoryEvent `json:"event" api:"required"`
+	// Number of retries needed to deliver the webhook.
+	RetryCount int64 `json:"retry_count" api:"required"`
+	// Delivery status stored for the event: `success`, `retrying`, or `failed`.
+	// `success` means the endpoint returned a 2xx response. `retrying` means that
+	// attempt did not.
+	Status WebhookEndpointHistoryResponseHistoryStatus `json:"status" api:"required"`
+	JSON   webhookEndpointHistoryResponseHistoryJSON   `json:"-"`
+}
+
+// webhookEndpointHistoryResponseHistoryJSON contains the JSON metadata for the struct [WebhookEndpointHistoryResponseHistory]
+type webhookEndpointHistoryResponseHistoryJSON struct {
+	ID          apijson.Field
+	AssetID     apijson.Field
+	CreatedAt   apijson.Field
+	Event       apijson.Field
+	RetryCount  apijson.Field
+	Status      apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *WebhookEndpointHistoryResponseHistory) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r webhookEndpointHistoryResponseHistoryJSON) RawJSON() string {
+	return r.raw
+}
+
 type WebhookEndpointListResponseAllWebhooksTrigger string
 
 const (
@@ -501,6 +573,62 @@ const (
 func (r WebhookEndpointListResponseAllWebhooksTrigger) IsKnown() bool {
 	switch r {
 	case WebhookEndpointListResponseAllWebhooksTriggerStatus, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatus, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusCreated, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusDownloaded, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusOptimized, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusReady, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusErrored, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusDeleted, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusRepackaged, WebhookEndpointListResponseAllWebhooksTriggerVideoStatusStreamReady, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusCreated, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusReady, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusPreparing, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusConnected, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusActive, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusComplete, WebhookEndpointListResponseAllWebhooksTriggerLiveVideoStatusDisconnected, WebhookEndpointListResponseAllWebhooksTriggerEventEmbedViewed, WebhookEndpointListResponseAllWebhooksTriggerEventEmbedCtaClicked, WebhookEndpointListResponseAllWebhooksTriggerEventVideoUpdated, WebhookEndpointListResponseAllWebhooksTriggerEventVideoUploaded, WebhookEndpointListResponseAllWebhooksTriggerEventPlaylistCreated, WebhookEndpointListResponseAllWebhooksTriggerEventPlaylistAsset, WebhookEndpointListResponseAllWebhooksTriggerEventPlaylistDeleted, WebhookEndpointListResponseAllWebhooksTriggerEventVideoAnalytics, WebhookEndpointListResponseAllWebhooksTriggerEventImageAnalytics, WebhookEndpointListResponseAllWebhooksTriggerEventEmbedFormSubmitted, WebhookEndpointListResponseAllWebhooksTriggerEventCommentAll, WebhookEndpointListResponseAllWebhooksTriggerEventChannelMemberJoined:
+		return true
+	}
+	return false
+}
+
+type WebhookEndpointHistoryResponseHistoryStatus string
+
+const (
+	WebhookEndpointHistoryResponseHistoryStatusSuccess  WebhookEndpointHistoryResponseHistoryStatus = "success"
+	WebhookEndpointHistoryResponseHistoryStatusRetrying WebhookEndpointHistoryResponseHistoryStatus = "retrying"
+	WebhookEndpointHistoryResponseHistoryStatusFailed   WebhookEndpointHistoryResponseHistoryStatus = "failed"
+)
+
+func (r WebhookEndpointHistoryResponseHistoryStatus) IsKnown() bool {
+	switch r {
+	case WebhookEndpointHistoryResponseHistoryStatusSuccess, WebhookEndpointHistoryResponseHistoryStatusRetrying, WebhookEndpointHistoryResponseHistoryStatusFailed:
+		return true
+	}
+	return false
+}
+
+type WebhookEndpointHistoryResponseHistoryEvent string
+
+const (
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusCreated          WebhookEndpointHistoryResponseHistoryEvent = "video.status.created"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusDownloaded       WebhookEndpointHistoryResponseHistoryEvent = "video.status.downloaded"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusOptimized        WebhookEndpointHistoryResponseHistoryEvent = "video.status.optimized"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusReady            WebhookEndpointHistoryResponseHistoryEvent = "video.status.ready"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusErrored          WebhookEndpointHistoryResponseHistoryEvent = "video.status.errored"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusDeleted          WebhookEndpointHistoryResponseHistoryEvent = "video.status.deleted"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusRepackaged       WebhookEndpointHistoryResponseHistoryEvent = "video.status.repackaged"
+	WebhookEndpointHistoryResponseHistoryEventVideoStatusStreamReady      WebhookEndpointHistoryResponseHistoryEvent = "video.status.stream_ready"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusCreated      WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.created"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusReady        WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.ready"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusPreparing    WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.preparing"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusConnected    WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.connected"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusActive       WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.active"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusComplete     WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.complete"
+	WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusDisconnected WebhookEndpointHistoryResponseHistoryEvent = "live.video.status.disconnected"
+	WebhookEndpointHistoryResponseHistoryEventEventEmbedViewed            WebhookEndpointHistoryResponseHistoryEvent = "event.embed.viewed"
+	WebhookEndpointHistoryResponseHistoryEventEventEmbedCtaClicked        WebhookEndpointHistoryResponseHistoryEvent = "event.embed.cta_clicked"
+	WebhookEndpointHistoryResponseHistoryEventEventVideoUpdated           WebhookEndpointHistoryResponseHistoryEvent = "event.video.updated"
+	WebhookEndpointHistoryResponseHistoryEventEventVideoUploaded          WebhookEndpointHistoryResponseHistoryEvent = "event.video.uploaded"
+	WebhookEndpointHistoryResponseHistoryEventEventPlaylistCreated        WebhookEndpointHistoryResponseHistoryEvent = "event.playlist.created"
+	WebhookEndpointHistoryResponseHistoryEventEventPlaylistAsset          WebhookEndpointHistoryResponseHistoryEvent = "event.playlist.asset"
+	WebhookEndpointHistoryResponseHistoryEventEventPlaylistDeleted        WebhookEndpointHistoryResponseHistoryEvent = "event.playlist.deleted"
+	WebhookEndpointHistoryResponseHistoryEventEventVideoAnalytics         WebhookEndpointHistoryResponseHistoryEvent = "event.video.analytics"
+	WebhookEndpointHistoryResponseHistoryEventEventImageAnalytics         WebhookEndpointHistoryResponseHistoryEvent = "event.image.analytics"
+	WebhookEndpointHistoryResponseHistoryEventEventEmbedFormSubmitted     WebhookEndpointHistoryResponseHistoryEvent = "event.embed.form_submitted"
+	WebhookEndpointHistoryResponseHistoryEventEventCommentAll             WebhookEndpointHistoryResponseHistoryEvent = "event.comment.all"
+	WebhookEndpointHistoryResponseHistoryEventEventChannelMemberJoined    WebhookEndpointHistoryResponseHistoryEvent = "event.channel.member_joined"
+)
+
+func (r WebhookEndpointHistoryResponseHistoryEvent) IsKnown() bool {
+	switch r {
+	case WebhookEndpointHistoryResponseHistoryEventVideoStatusCreated, WebhookEndpointHistoryResponseHistoryEventVideoStatusDownloaded, WebhookEndpointHistoryResponseHistoryEventVideoStatusOptimized, WebhookEndpointHistoryResponseHistoryEventVideoStatusReady, WebhookEndpointHistoryResponseHistoryEventVideoStatusErrored, WebhookEndpointHistoryResponseHistoryEventVideoStatusDeleted, WebhookEndpointHistoryResponseHistoryEventVideoStatusRepackaged, WebhookEndpointHistoryResponseHistoryEventVideoStatusStreamReady, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusCreated, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusReady, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusPreparing, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusConnected, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusActive, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusComplete, WebhookEndpointHistoryResponseHistoryEventLiveVideoStatusDisconnected, WebhookEndpointHistoryResponseHistoryEventEventEmbedViewed, WebhookEndpointHistoryResponseHistoryEventEventEmbedCtaClicked, WebhookEndpointHistoryResponseHistoryEventEventVideoUpdated, WebhookEndpointHistoryResponseHistoryEventEventVideoUploaded, WebhookEndpointHistoryResponseHistoryEventEventPlaylistCreated, WebhookEndpointHistoryResponseHistoryEventEventPlaylistAsset, WebhookEndpointHistoryResponseHistoryEventEventPlaylistDeleted, WebhookEndpointHistoryResponseHistoryEventEventVideoAnalytics, WebhookEndpointHistoryResponseHistoryEventEventImageAnalytics, WebhookEndpointHistoryResponseHistoryEventEventEmbedFormSubmitted, WebhookEndpointHistoryResponseHistoryEventEventCommentAll, WebhookEndpointHistoryResponseHistoryEventEventChannelMemberJoined:
 		return true
 	}
 	return false
