@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/gumlet/golang-sdk/compare/v1.2.1...v1.2.2) (2026-11-27)
+
+
+### Chores
+
+* **api:** update generated SDK content ([4c895cb](https://github.com/gumlet/golang-sdk/commit/4c895cbd5c1da38643124aac688a53ebe2bf847c))
+
 ## [1.2.1](https://github.com/gumlet/golang-sdk/compare/v1.1.2...v1.2.1) (2026-11-27)
 
 
