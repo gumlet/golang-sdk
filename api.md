@@ -50,11 +50,12 @@ Complete reference of every operation, grouped by resource. See [the README](./R
   - [Get playlist assets](#get-playlist-assets)
   - [Arrange Videos In Playlist](#arrange-videos-in-playlist)
 - [`WebhookEndpoints`](#webhookendpoints)
+  - [Get Webhook](#get-webhook)
   - [Create Webhook](#create-webhook)
   - [List Webhooks](#list-webhooks)
   - [Update Webhook](#update-webhook)
   - [Delete Webhook](#delete-webhook)
-  - [Get History](#get-history)
+  - [Get Webhook History](#get-webhook-history)
 - [`ImageSources`](#imagesources)
   - [Create Source](#create-source)
   - [List Sources](#list-sources)
@@ -994,6 +995,23 @@ fmt.Println(videoPlaylist)
 
 Create webhook listeners and receive video status, live video status, and product events. Gumlet POSTs JSON to your URL with the `x-gumlet-token` header.
 
+### Get Webhook
+
+Retrieve details of a single webhook by ID.
+
+| Direction | Type |
+| --- | --- |
+| Response | [`WebhookEndpointGetResponse`](./webhookendpoint.go) |
+
+```go
+webhookEndpoint, err := client.WebhookEndpoints.Get(context.Background(), "webhookId")
+if err != nil {
+	panic(err)
+}
+
+fmt.Println(webhookEndpoint)
+```
+
 ### Create Webhook
 
 Creates a new webhook listener. Gumlet POSTs JSON to `url` for each matching event and sends `secret_token` in the `x-gumlet-token` header. Payload schemas are documented in the webhooks section.
@@ -1065,16 +1083,16 @@ if err != nil {
 fmt.Println(webhookEndpoint)
 ```
 
-### Get History
+### Get Webhook History
 
-Get logs history for a given webhook.
+Get delivery history logs for a given webhook.
 
 Pagination uses `page_number` / `page_size`. Use `next_page_token` for cursor-based pagination.
 
 | Direction | Type |
 | --- | --- |
 | Request | [`WebhookEndpointHistoryParams`](./webhookendpoint.go) |
-| Response | `[]map[string]interface{}` |
+| Response | [`WebhookEndpointHistoryResponse`](./webhookendpoint.go) |
 
 ```go
 webhookEndpoint, err := client.WebhookEndpoints.History(context.Background(), "webhookId", sdk.WebhookEndpointHistoryParams{
@@ -1129,6 +1147,7 @@ Pagination uses `page_number` / `page_size`. Use `next_page_token` for cursor-ba
 
 ```go
 imageSource, err := client.ImageSources.List(context.Background(), sdk.ImageSourceListParams{
+	OrderBy:    sdk.F[sdk.ImageSourceListParamsOrderBy](sdk.ImageSourceListParamsOrderBy("asc")),
 	PageNumber: sdk.F[int64](1),
 	PageSize:   sdk.F[int64](20),
 })
@@ -1486,6 +1505,7 @@ Pagination uses `page_number` / `page_size` (max page size 200). Use `next_page_
 
 ```go
 videoWorkspace, err := client.VideoWorkspaces.List(context.Background(), sdk.VideoWorkspaceListParams{
+	OrderBy:    sdk.F[sdk.VideoWorkspaceListParamsOrderBy](sdk.VideoWorkspaceListParamsOrderBy("asc")),
 	PageNumber: sdk.F[int64](1),
 	PageSize:   sdk.F[int64](20),
 })

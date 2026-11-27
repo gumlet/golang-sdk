@@ -104,6 +104,7 @@ func TestScalarSmokeImageSourceService(t *testing.T) {
 		client := scalarSmokeClient
 		{
 			imageSource, err := client.ImageSources.List(context.Background(), sdk.ImageSourceListParams{
+				OrderBy:    sdk.F[sdk.ImageSourceListParamsOrderBy](sdk.ImageSourceListParamsOrderBy("asc")),
 				PageNumber: sdk.F[int64](1),
 				PageSize:   sdk.F[int64](20),
 			})
@@ -119,6 +120,7 @@ func TestScalarSmokeImageSourceService(t *testing.T) {
 		{
 			imageSource, err := client.ImageSources.List(context.Background(), sdk.ImageSourceListParams{
 				NextPageToken: sdk.F[string]("nextPageToken"),
+				OrderBy:       sdk.F[sdk.ImageSourceListParamsOrderBy](sdk.ImageSourceListParamsOrderBy("asc")),
 				PageNumber:    sdk.F[int64](1),
 				PageSize:      sdk.F[int64](20),
 			})
