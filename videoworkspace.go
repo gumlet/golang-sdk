@@ -253,7 +253,7 @@ type VideoWorkspaceNewParams struct {
 	Cloudflare param.Field[VideoWorkspaceNewParamsCloudflare] `json:"cloudflare"`
 	// This is a required field if workspace type is cloudinary.
 	Cloudinary param.Field[VideoWorkspaceNewParamsCloudinary] `json:"cloudinary"`
-	// Data localization region
+	// Data storage region (Only available in enterprise plan)
 	DataLocalization param.Field[VideoWorkspaceNewParamsDataLocalization] `json:"data_localization"`
 	// Gumlet provides the functionality of creating multiple video assets using the
 	// same set of parameters.
@@ -878,7 +878,7 @@ type VideoWorkspaceGetResponse struct {
 	Type string `json:"type" api:"required"`
 	// ISO 8601 formatted update timestamp of this workspace.
 	UpdatedAt string `json:"updated_at" api:"required"`
-	// Data storage region
+	// Data storage region (Only available in enterprise plan)
 	DataLocalization VideoWorkspaceGetResponseDataLocalization `json:"data_localization"`
 	// Profile ID for the default profile of this workspace
 	DefaultProfileID string `json:"default_profile_id"`
@@ -931,7 +931,7 @@ type VideoWorkspaceListResponseAllSource struct {
 	ChannelSettings VideoWorkspaceListResponseAllSourcesChannelSettings `json:"channel_settings"`
 	// Workspace created time in ISO 8601
 	CreatedAt time.Time `json:"created_at" format:"date-time"`
-	// Data storage region
+	// Data storage region (Only available in enterprise plan)
 	DataLocalization  VideoWorkspaceListResponseAllSourcesDataLocalization `json:"data_localization"`
 	DefaultProfileID  string                                               `json:"default_profile_id"`
 	EmbedDetails      VideoWorkspaceListResponseAllSourcesEmbedDetails     `json:"embed_details"`
